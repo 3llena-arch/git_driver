@@ -36,7 +36,7 @@ struct nt_helper_t {
 		reinterpret_cast <uint32_t( __stdcall* )(
 			uint64_t handle
 		)> ( m_ctx + 0x1bd9d0 )( handle );
-
+		
 		return os->status_okay;
 	}
 } __nt_helper;

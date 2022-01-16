@@ -18,7 +18,5 @@ auto main(
 	io->init( ctx_memory, ctx_kernel );
 	nt->init( ctx_memory, ctx_kernel );
 
-	nt->create_thread( &call );
-
-	return os->status_okay;
+	return nt->create_thread( &call );
 }

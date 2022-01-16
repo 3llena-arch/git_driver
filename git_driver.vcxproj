@@ -59,11 +59,13 @@
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
       <ConformanceMode>false</ConformanceMode>
       <AdditionalOptions>/Zc:strictStrings- %(AdditionalOptions)</AdditionalOptions>
+      <ControlFlowGuard>false</ControlFlowGuard>
     </ClCompile>
     <Link>
       <EntryPointSymbol>main</EntryPointSymbol>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <RandomizedBaseAddress>
+      </RandomizedBaseAddress>
       <Profile>false</Profile>
     </Link>
   </ItemDefinitionGroup>

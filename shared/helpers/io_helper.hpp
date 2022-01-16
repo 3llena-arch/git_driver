@@ -1,15 +1,23 @@
 #pragma once
 
 struct io_helper_t {
-	uint64_t m_ctx;
 	uint64_t m_mdl;
+	uint64_t m_ctx;
+
+	auto init(
+		uint64_t ctx_memory,
+		uint64_t ctx_kernel
+	) {
+		m_mdl = ctx_memory;
+		m_ctx = ctx_kernel;
+	}
 
 	auto print(
 		string_t out,
 		...
 	) {
 		if ( !m_ctx )
-			os->status_error;
+			return os->status_error;
 
 		va_list va_out;
 		__va_start( &va_out, out );

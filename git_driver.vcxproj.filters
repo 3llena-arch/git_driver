@@ -3,4 +3,9 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="shared\shared.hpp" />
+    <ClInclude Include="shared\helpers\log_helper.hpp" />
+    <ClInclude Include="shared\helpers\os_helper.hpp" />
+  </ItemGroup>
 </Project>

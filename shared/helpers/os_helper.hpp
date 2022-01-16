@@ -7,12 +7,12 @@ struct os_helper_t {
 		status_error,
 	};
 
-	auto os_to_string(
+	auto to_string(
 		os_t os
 	) {
-		string_t locale_t[ 3 ] = { 
-			"status_okay", 
-			"status_warning", 
+		string_t locale_t[ 3 ] = {
+			"status_okay",
+			"status_warning",
 			"status_error"
 		};
 		return locale_t[ os ];

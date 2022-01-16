@@ -1,16 +1,18 @@
 #include "shared/shared.hpp"
 
 os_helper_t* os = &__os_helper;
-log_helper_t* log = &__log_helper;
+io_helper_t* io = &__io_helper;
+nt_helper_t* nt = &__nt_helper;
 
 auto main(
 	uint64_t ctx_memory,
 	uint64_t ctx_kernel
 ) -> uint32_t {
-	log->m_mdl = ctx_memory;
-	log->m_ctx = ctx_kernel;
+	io->m_mdl = ctx_memory;
+	io->m_ctx = ctx_kernel;
 
-	log->print( "Hello, world!\n%llx\n", 0x100 );
+	io->print( "hello\n" );
+	io->print( "%c\n", os->to_string( os->status_okay ) );
 
 	return os->status_okay;
 }

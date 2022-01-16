@@ -1,6 +1,6 @@
 #pragma once
 
-struct log_helper_t {
+struct io_helper_t {
 	uint64_t m_ctx;
 	uint64_t m_mdl;
 
@@ -24,6 +24,6 @@ struct log_helper_t {
 		va_end(va_out);
 		return os->status_okay;
 	}
-} __log_helper;
+} __io_helper;
 
-extern log_helper_t* log;
+extern io_helper_t* io;

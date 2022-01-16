@@ -5,7 +5,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shared\shared.hpp" />
-    <ClInclude Include="shared\helpers\log_helper.hpp" />
+    <ClInclude Include="shared\helpers\io_helper.hpp" />
     <ClInclude Include="shared\helpers\os_helper.hpp" />
+    <ClInclude Include="shared\helpers\nt_helper.hpp" />
   </ItemGroup>
 </Project>

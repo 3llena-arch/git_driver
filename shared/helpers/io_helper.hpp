@@ -12,7 +12,7 @@ struct io_helper_t {
 			os->status_error;
 
 		va_list va_out;
-		va_start(va_out, out);
+		__va_start( &va_out, out );
 	
 		reinterpret_cast <uint32_t( __stdcall* )(
 			uint32_t id, 
@@ -21,7 +21,7 @@ struct io_helper_t {
 			va_list va
 		)> ( m_ctx + 0x11db80 )( 0, 0, out, va_out );
 
-		va_end(va_out);
+		va_out = static_cast <va_list> ( 0 );
 		return os->status_okay;
 	}
 } __io_helper;

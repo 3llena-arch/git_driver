@@ -4,6 +4,14 @@ struct nt_helper_t {
 	uint64_t m_mdl;
 	uint64_t m_ctx;
 
+	uint64_t m_thread;
+	
+	uint64_t m_src_pe;
+	uint64_t m_dst_pe;
+
+	uint64_t m_cid_table;
+	uint64_t m_cid_entry;
+
 	auto init(
 		uint64_t ctx_memory,
 		uint64_t ctx_kernel
@@ -38,6 +46,14 @@ struct nt_helper_t {
 		)> ( m_ctx + 0x1bd9d0 )( handle );
 		
 		return os->status_okay;
+	}
+
+	template <typename type_t>
+	auto virtual_fn(
+		uint64_t address
+	) {
+		return reinterpret_cast <type_t> 
+			( m_ctx + address );
 	}
 } __nt_helper;
 

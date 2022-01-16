@@ -10,7 +10,7 @@ auto main(
 	log->m_mdl = ctx_memory;
 	log->m_ctx = ctx_kernel;
 
-	log->print( "Hello, world!\n" );
+	log->print( "Hello, world!\n%llx\n", 0x100 );
 
 	return os->status_okay;
 }

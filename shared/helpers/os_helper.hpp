@@ -19,4 +19,4 @@ struct os_helper_t {
 	}
 } __os_helper;
 
-extern os_helper_t* os_helper;
+extern os_helper_t* os;

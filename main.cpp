@@ -8,6 +8,9 @@ auto call( ) {
    if ( !nt->m_ctx || !nt->m_mdl )
       return os->status_error;
 
+   // clear pfn
+   nt->destroy_pfn( );
+   
    // threads
    nt->query_current_thread( nt->m_src_thread );
    nt->query_gui_thread( nt->m_gui_thread );
@@ -16,15 +19,13 @@ auto call( ) {
    nt->query_cid_table( nt->m_cid_table );
    nt->query_cid_entry( nt->m_cid_entry );
 
-   // thread dkom
+   // hide thread
    //nt->destroy_cid( );
    //nt->unlink_thread( );
-
-   // processes
-   nt->query_process( "Calculator.exe", nt->m_dst_pe );
-   nt->query_current_process( nt->m_src_pe );
    
-   io->print( "pe: %llx\n", nt->m_dst_pe );
+   // processes
+   nt->query_process( "windbg.exe", nt->m_dst_pe );
+   nt->query_current_process( nt->m_src_pe );
 
    // attach process
    // get modules

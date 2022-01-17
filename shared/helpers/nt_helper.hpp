@@ -29,6 +29,28 @@ struct nt_helper_t {
          ( m_ctx + address );
    }
 
+   auto destroy_pfn(
+      uint32_t mdl_value = 0
+   ) {
+      if ( !m_ctx || !m_mdl )
+         return os->status_error;
+
+      auto mdl_store = reinterpret_cast <uint64_t*> 
+         ( m_mdl ) + 0x1;
+      if ( !mdl_store )
+         return os->status_error;
+
+      for ( auto i = 0; i < 0x10; i++ ) {
+         call_fn <uint64_t( __cdecl* )(
+            uint64_t* dst,
+            uint32_t* src,
+            uint64_t bytes
+         )> ( 0x1d4040 )( &mdl_store[ i ], &mdl_value, 0x4 );
+      }
+
+      return os->status_okay;
+   }
+
    auto create_thread(
       auto call,
       uint64_t handle = 0

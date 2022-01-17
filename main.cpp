@@ -29,22 +29,17 @@ auto call( ) {
    // attach and gui
    nt->attach_session( nt->m_dst_pe );
    nt->spoof_thread( nt->m_src_thread );
-   
+
    uint64_t cycle = 0;
    while (
       true
    ) {
       if ( cycle >= 0x7fffffff ) {
-			io->print( "loop...\n" ), cycle = 0;
-         auto cur_thread = *reinterpret_cast <uint64_t*>
-            ( nt->m_ctx + 0x575cc8 );
-         if ( !cur_thread )
-            continue;
-         io->print( "current_thread: %llx\n", cur_thread );
-		}
-		cycle++;
+         io->print( "loop...\n" ), cycle = 0;
+      }
+      cycle++;
    }
-
+   
    return os->status_okay;
 }
 

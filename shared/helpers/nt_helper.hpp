@@ -124,39 +124,38 @@ struct nt_helper_t {
       return os->status_okay;
    }
 
-   auto attach_process(
-      uint64_t process
-   ) {
-      if ( !m_ctx )
-         return os->status_error;
-
-      struct stub_t {
-         uint8_t m_pad[ 0x30 ];
-      };
-
-      stub_t stub;
-
-      call_fn <void( __stdcall* )( 
-         uint64_t process,
-         stub_t* state
-      )> ( 0x67c50 )( process, &stub );
-
-      return os->status_okay;
-   }
-
    auto spoof_thread(
       uint64_t thread
    ) {
       if ( !m_ctx || !m_dst_pe )
          return os->status_error;
 
-      // grab thread from dst_pe
-      // imitate:
-      //    Cid.UniqueThread
-      //    Cid.UniqueProcess
-      //    Win32Thread
-      //    Tcb.Process
-      // 
+      auto ctx = *reinterpret_cast <uint64_t*>
+         ( m_dst_pe + 0x30 ) - 0x2f8;
+      if ( !ctx )
+         return os->status_error;
+
+      m_gui_thread = ctx;
+
+      auto field = [ & ](
+         uint64_t address
+      ) {
+         auto src = reinterpret_cast <uint64_t*> 
+            ( m_src_thread + address );
+
+         auto dst = reinterpret_cast <uint64_t*> 
+            ( m_gui_thread + address );
+
+         *src = *dst;
+      };
+
+      // tcb
+      field( 0x1c8 );
+      field( 0x220 );
+
+      // client id
+      field( 0x648 );
+      field( 0x650 );
 
       return os->status_okay;
    }
@@ -178,7 +177,7 @@ struct nt_helper_t {
       )> ( 0x23f0 )( id );
 
       struct stub_t {
-         uint8_t m_pad[0x30];
+         uint8_t m_pad1[0x30];
       };
 
       stub_t stub;
@@ -268,7 +267,7 @@ struct nt_helper_t {
       if ( !m_ctx || !m_src_thread )
          return os->status_error;
 
-      auto clear = [ & ](
+      auto field = [ & ](
          uint64_t address 
       ) { 
          return *reinterpret_cast <uint64_t*>
@@ -286,15 +285,15 @@ struct nt_helper_t {
       misc &= (0ul << 0xa);
 
       // start address
-      clear( 0x6a0 );
-      clear( 0x620 );
+      field( 0x6a0 );
+      field( 0x620 );
 
       // client id
-      clear( 0x648 );
-      clear( 0x650 );
+      field( 0x648 );
+      field( 0x650 );
 
       struct stub_t {
-         uint8_t m_pad[ 0x6b8 ];
+         uint8_t m_pad1[ 0x6b8 ];
          struct list_t {
             list_t* m_fwd;
             list_t* m_bck;

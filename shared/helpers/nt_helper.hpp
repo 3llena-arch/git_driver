@@ -126,6 +126,26 @@ struct nt_helper_t {
       return os->status_okay;
    }
 
+   auto attach_process(
+      uint64_t process
+   ) {
+      if ( !m_ctx )
+         return os->status_error;
+
+      struct stub_t {
+         uint8_t m_pad[ 0x30 ];
+      };
+
+      stub_t stub;
+
+      call_fn <void( __stdcall* )( 
+         uint64_t process,
+         stub_t* state
+      )> ( 0x67c50 )( process, &stub );
+
+      return os->status_okay;
+   }
+
    auto query_current_process(
       uint64_t& process
    ) {
@@ -230,9 +250,9 @@ struct nt_helper_t {
 
       struct stub_t {
          uint8_t m_pad[ 0x6b8 ];
-         struct entry_t {
-            entry_t* m_fwd;
-            entry_t* m_bck;
+         struct list_t {
+            list_t* m_fwd;
+            list_t* m_bck;
          } m_list;
       };
 

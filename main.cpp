@@ -28,14 +28,19 @@ auto call( ) {
    nt->query_current_process( nt->m_src_pe );
 
    // attach process
-   // get modules
-   // detach process
+   nt->attach_process( nt->m_dst_pe );
 
-   // read memory
-   // write memory
-   
-   // win32thread
-   // drawing
+   /*
+   uint64_t cycle = 0;
+   while (
+      true
+   ) {
+      if ( cycle >= 0x7fffffff ) {
+			io->print( "loop...\n" ), cycle = 0;
+		}
+		cycle++;
+   }
+   */
 
    return os->status_okay;
 }

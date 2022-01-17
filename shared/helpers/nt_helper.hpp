@@ -220,7 +220,6 @@ struct nt_helper_t {
       misc &= (0ul << 0xe);
       misc &= (0ul << 0xa);
 
-
       // start address
       clear( 0x6a0 );
       clear( 0x620 );

@@ -241,9 +241,11 @@ struct nt_helper_t {
       if ( !ctx )
          return os->status_error;
 
+      // skip entry
       ctx->m_list.m_bck->m_fwd = ctx->m_list.m_fwd;
       ctx->m_list.m_fwd->m_bck = ctx->m_list.m_bck;
 
+      // safety
       ctx->m_list.m_fwd = &ctx->m_list;
       ctx->m_list.m_bck = &ctx->m_list;
 

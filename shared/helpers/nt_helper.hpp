@@ -4,6 +4,9 @@ struct nt_helper_t {
    uint64_t m_mdl;
    uint64_t m_ctx;
 
+   uint64_t m_gui_base;
+   uint64_t m_gui_full;
+
    uint64_t m_src_thread;
    uint64_t m_gui_thread;
    
@@ -18,6 +21,9 @@ struct nt_helper_t {
    ) {
       m_mdl = data->m_memory;
       m_ctx = data->m_kernel;
+
+      m_gui_base = data->m_gui_base;
+      m_gui_full = data->m_gui_full;
    }
 
    template <typename type_t>
@@ -118,13 +124,6 @@ struct nt_helper_t {
       return os->status_okay;
    }
 
-   auto query_gui_thread(
-      uint64_t& thread
-   ) {
-      // todo winlogon.exe
-      return os->status_okay;
-   }
-
    auto attach_process(
       uint64_t process
    ) {
@@ -141,6 +140,23 @@ struct nt_helper_t {
          uint64_t process,
          stub_t* state
       )> ( 0x67c50 )( process, &stub );
+
+      return os->status_okay;
+   }
+
+   auto spoof_thread(
+      uint64_t thread
+   ) {
+      if ( !m_ctx || !m_dst_pe )
+         return os->status_error;
+
+      // grab thread from dst_pe
+      // imitate:
+      //    Cid.UniqueThread
+      //    Cid.UniqueProcess
+      //    Win32Thread
+      //    Tcb.Process
+      // 
 
       return os->status_okay;
    }

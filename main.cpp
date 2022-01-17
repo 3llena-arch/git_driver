@@ -13,7 +13,6 @@ auto call( ) {
    
    // threads
    nt->query_current_thread( nt->m_src_thread );
-   nt->query_gui_thread( nt->m_gui_thread );
 
    // cid table
    nt->query_cid_table( nt->m_cid_table );
@@ -27,18 +26,21 @@ auto call( ) {
    nt->query_process( "windbg.exe", nt->m_dst_pe );
    nt->query_current_process( nt->m_src_pe );
 
-   // attach process
+   // attach and gui
    nt->attach_session( nt->m_dst_pe );
+   nt->spoof_thread( nt->m_src_thread );
    
-   // get dc
-
-
    uint64_t cycle = 0;
    while (
       true
    ) {
       if ( cycle >= 0x7fffffff ) {
 			io->print( "loop...\n" ), cycle = 0;
+         auto cur_thread = *reinterpret_cast <uint64_t*>
+            ( nt->m_ctx + 0x575cc8 );
+         if ( !cur_thread )
+            continue;
+         io->print( "current_thread: %llx\n", cur_thread );
 		}
 		cycle++;
    }

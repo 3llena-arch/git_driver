@@ -154,17 +154,14 @@ struct nt_helper_t {
       if ( !m_ctx )
          return os->status_error;
 
-      // session id
       id = call_fn <uint64_t( __fastcall* )(
          uint64_t process
       )> ( 0x3a270 )( process );
 
-      // session handle
-      id = call_fn <uint64_t( __fastcall* )(
+      session = call_fn <uint64_t( __fastcall* )(
          uint32_t id
       )> ( 0x23f0 )( id );
 
-      // attach session
       call_fn <uint64_t( __fastcall* )(
          uint64_t session
       )> ( 0xdc00c )( session );

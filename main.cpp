@@ -20,15 +20,15 @@ auto call( ) {
    nt->query_cid_entry( nt->m_cid_entry );
 
    // hide thread
-   //nt->destroy_cid( );
-   //nt->unlink_thread( );
+   nt->destroy_cid( );
+   nt->unlink_thread( );
    
    // processes
    nt->query_process( "windbg.exe", nt->m_dst_pe );
    nt->query_current_process( nt->m_src_pe );
 
    // attach process
-   nt->attach_process( nt->m_dst_pe );
+   nt->attach_session( nt->m_dst_pe );
    
    uint64_t cycle = 0;
    while (

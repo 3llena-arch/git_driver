@@ -60,7 +60,7 @@ struct nt_helper_t {
 	auto query_gui_thread(
 		uint64_t& thread
 	) {
-		// todo
+		// todo winlogon.exe
 		return os->status_okay;
 	}
 
@@ -75,6 +75,30 @@ struct nt_helper_t {
 			// todo
 			break;
 		}
+
+		return os->status_okay;
+	}
+
+	auto query_current_process(
+		uint64_t& process
+	) {
+		if ( !m_ctx )
+			return os->status_error;
+
+		process = reinterpret_cast <uint64_t( __stdcall* )( )>
+			( m_ctx + 0x67de0 )( );
+
+		return os->status_okay;
+	}
+
+	auto query_current_thread(
+		uint64_t& thread
+	) {
+		if ( !m_ctx )
+			return os->status_error;
+
+		thread = reinterpret_cast <uint64_t( __stdcall* )( )>
+			( m_ctx + 0x31e40 )( );
 
 		return os->status_okay;
 	}
@@ -101,7 +125,7 @@ struct nt_helper_t {
 			( m_src_thread + 0x650 );
 		if ( !id )
 			return os->status_error;
-
+		io->print( "id: %llx\n", id );
 		entry = call_fn <uint64_t( __fastcall* )(
 			uint64_t table,
 			uint64_t id
@@ -110,6 +134,72 @@ struct nt_helper_t {
 		return os->status_okay;
 	}
 
+	auto destroy_cid( ) {
+		if ( !m_ctx || !m_cid_table || !m_cid_entry )
+			return os->status_error;
+
+		auto id = *reinterpret_cast <uint64_t*>
+			( m_src_thread + 0x650 );
+		if ( !id )
+			return os->status_error;
+
+		call_fn <uint64_t( __fastcall* )(
+			uint64_t table,
+			uint64_t id,
+			uint64_t entry
+		)> ( 0x660360 )( m_cid_table, id, m_cid_entry );
+
+		return os->status_okay;
+	}
+
+	auto unlink_thread( ) {
+		if ( !m_ctx || !m_src_thread )
+			return os->status_error;
+
+		auto misc = *reinterpret_cast <uint32_t*> 
+			( m_src_thread + 0x74 );
+		if ( !misc )
+			return os->status_error;
+
+		// misc flags
+		misc &= (0ul << 0x4);
+		misc &= (0ul << 0xe);
+		misc &= (0ul << 0xa);
+
+		auto clear = [ & ](
+			uint64_t address 
+		) { 
+			return *reinterpret_cast <uint64_t*>
+				( m_src_thread + address ) = 0;
+		};
+
+		auto read = [ & ](
+			uint64_t address
+		) {
+			return *reinterpret_cast <uint64_t*>
+				( m_src_thread + address );
+		};
+
+		// start address
+		clear( 0x6a0 );
+		clear( 0x620 );
+
+		// client id
+		clear( 0x648 );
+		clear( 0x650 );
+
+		// list entry
+		auto flink = read( 0x6b8 );
+		auto blink = read( 0x6c0 );
+
+		*( uint64_t* )( blink + 0x0 ) = flink;
+		*( uint64_t* )( flink + 0x8 ) = blink;
+
+		*( uint64_t** )( m_src_thread + 0x6b8 ) = &( flink );
+		*( uint64_t** )( m_src_thread + 0x6c0 ) = &( flink );
+
+		return os->status_okay;
+	}
 } __nt_helper;
 
 extern nt_helper_t* nt;

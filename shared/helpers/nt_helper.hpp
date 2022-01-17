@@ -57,24 +57,26 @@ struct nt_helper_t {
       return os->status_okay;
    }
 
-   auto query_gui_thread(
-      uint64_t& thread
-   ) {
-      // todo winlogon.exe
-      return os->status_okay;
-   }
-
    auto query_process(
       string_t name,
-      uint64_t& process
+      uint64_t& process,
+      uint64_t ctx = 0
    ) {
       if ( !m_ctx || !name )
          return os->status_error;
 
-      while ( !process ) {
-         for ( auto i = 0x4; i < 0x7fff; i++ ) {
-            uint64_t ctx;
+      auto cmp = [ & ](
+         string_t string,
+         string_t substring
+      ) {
+         return !call_fn <uint32_t( __cdecl* )(
+            string_t string,
+            string_t substring
+         )> ( 0x19f2c0 )( string, substring );
+      };
 
+      while ( !process ) {
+         for ( auto i = 0x4; i < 0x7fff; i += 0x4 ) {
             call_fn <uint32_t( __stdcall* )( 
                uint64_t id,
                uint64_t* process
@@ -83,15 +85,23 @@ struct nt_helper_t {
             if ( !ctx )
                continue;
 
-            auto file = *reinterpret_cast <string_t*>
+            auto file = reinterpret_cast <string_t> 
                ( ctx + 0x450 );
-            if ( !file || file != name )
+
+            if ( !cmp( file, name ) )
                continue;
-               
+
             process = ctx;
          }
       }
+      
+      return os->status_okay;
+   }
 
+   auto query_gui_thread(
+      uint64_t& thread
+   ) {
+      // todo winlogon.exe
       return os->status_okay;
    }
 
@@ -141,7 +151,7 @@ struct nt_helper_t {
          ( m_src_thread + 0x650 );
       if ( !id )
          return os->status_error;
-      io->print( "id: %llx\n", id );
+
       entry = call_fn <uint64_t( __fastcall* )(
          uint64_t table,
          uint64_t id

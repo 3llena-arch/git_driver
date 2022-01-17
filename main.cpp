@@ -17,21 +17,14 @@ auto call( ) {
    nt->query_cid_entry( nt->m_cid_entry );
 
    // thread dkom
-   nt->destroy_cid( );
-   nt->unlink_thread( );
+   //nt->destroy_cid( );
+   //nt->unlink_thread( );
 
    // processes
-   nt->query_process( "EscapeFromTark", nt->m_dst_pe );
+   nt->query_process( "Calculator.exe", nt->m_dst_pe );
    nt->query_current_process( nt->m_src_pe );
-
-   uint64_t cycle = 0;
-   while ( true ) {
-      if ( cycle >= 10000000000 ) {
-         io->print( "loop...\n" );
-         cycle = 0;
-      }
-      cycle++;
-   }
+   
+   io->print( "pe: %llx\n", nt->m_dst_pe );
 
    // attach process
    // get modules

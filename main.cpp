@@ -82,7 +82,7 @@ auto call( ) {
    };
 
    auto w_draw = [ & ](
-      uint64_t c,
+      uint64_t& c,
       uint64_t b,
       stub_t d
    ) {

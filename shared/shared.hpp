@@ -8,6 +8,7 @@
 
 // c includes
 #include <cstdarg>
+#include <cstring>
 
 // numbers
 using uint64_t = unsigned long long;

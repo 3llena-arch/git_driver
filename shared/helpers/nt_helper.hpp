@@ -162,9 +162,16 @@ struct nt_helper_t {
          uint32_t id
       )> ( 0x23f0 )( id );
 
+      struct stub_t {
+         uint8_t m_pad[0x30];
+      };
+
+      stub_t stub;
+
       call_fn <uint64_t( __fastcall* )(
-         uint64_t session
-      )> ( 0xdc00c )( session );
+         uint64_t session,
+         stub_t* state
+      )> ( 0xe9e00 )( session, &stub );
 
       return os->status_okay;
    }

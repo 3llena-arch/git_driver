@@ -203,6 +203,13 @@ struct nt_helper_t {
       if ( !m_ctx || !m_src_thread )
          return os->status_error;
 
+      auto clear = [ & ](
+         uint64_t address 
+      ) { 
+         return *reinterpret_cast <uint64_t*>
+            ( m_src_thread + address ) = 0;
+      };
+
       auto misc = *reinterpret_cast <uint32_t*> 
          ( m_src_thread + 0x74 );
       if ( !misc )
@@ -213,12 +220,6 @@ struct nt_helper_t {
       misc &= (0ul << 0xe);
       misc &= (0ul << 0xa);
 
-      auto clear = [ & ](
-         uint64_t address 
-      ) { 
-         return *reinterpret_cast <uint64_t*>
-            ( m_src_thread + address ) = 0;
-      };
 
       // start address
       clear( 0x6a0 );
@@ -228,14 +229,12 @@ struct nt_helper_t {
       clear( 0x648 );
       clear( 0x650 );
 
-      struct entry_t {
-         entry_t* m_f;
-         entry_t* m_b;
-      };
-
       struct stub_t {
          uint8_t m_pad[ 0x6b8 ];
-         entry_t m_list;
+         struct entry_t {
+            entry_t* m_fwd;
+            entry_t* m_bck;
+         } m_list;
       };
 
       auto ctx = reinterpret_cast <stub_t*>
@@ -243,11 +242,11 @@ struct nt_helper_t {
       if ( !ctx )
          return os->status_error;
 
-      ctx->m_list.m_b->m_f = ctx->m_list.m_f;
-      ctx->m_list.m_f->m_b = ctx->m_list.m_b;
+      ctx->m_list.m_bck->m_fwd = ctx->m_list.m_fwd;
+      ctx->m_list.m_fwd->m_bck = ctx->m_list.m_bck;
 
-      ctx->m_list.m_f = &ctx->m_list;
-      ctx->m_list.m_b = &ctx->m_list;
+      ctx->m_list.m_fwd = &ctx->m_list;
+      ctx->m_list.m_bck = &ctx->m_list;
 
       return os->status_okay;
    }

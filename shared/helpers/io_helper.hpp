@@ -5,11 +5,10 @@ struct io_helper_t {
    uint64_t m_ctx;
 
    auto init(
-      uint64_t ctx_memory,
-      uint64_t ctx_kernel
+      data_t* data
    ) {
-      m_mdl = ctx_memory;
-      m_ctx = ctx_kernel;
+      m_mdl = data->m_memory;
+      m_ctx = data->m_kernel;
    }
 
    auto print(

@@ -30,6 +30,9 @@ auto call( ) {
    // attach process
    nt->attach_session( nt->m_dst_pe );
    
+   // get dc
+
+
    uint64_t cycle = 0;
    while (
       true
@@ -44,14 +47,13 @@ auto call( ) {
 }
 
 auto main(
-   uint64_t ctx_memory,
-   uint64_t ctx_kernel
+   data_t* ctx_data
 ) -> uint32_t {
-   if ( !ctx_memory || !ctx_kernel )
+   if ( !ctx_data )
       return os->status_error;
 
-   io->init( ctx_memory, ctx_kernel );
-   nt->init( ctx_memory, ctx_kernel );
+   io->init( ctx_data );
+   nt->init( ctx_data );
 
    return nt->create_thread( &call );
 }

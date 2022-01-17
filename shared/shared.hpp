@@ -19,6 +19,14 @@ using uint8_t = unsigned char;
 using wstring_t = wchar_t*;
 using string_t = char*;
 
+// transfer
+struct data_t {
+   uint64_t m_gui_base;
+   uint64_t m_gui_full;
+   uint64_t m_memory;
+   uint64_t m_kernel;
+};
+
 // includes
 #include "helpers/os_helper.hpp"
 #include "helpers/io_helper.hpp"

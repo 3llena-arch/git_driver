@@ -220,13 +220,6 @@ struct nt_helper_t {
             ( m_src_thread + address ) = 0;
       };
 
-      auto read = [ & ](
-         uint64_t address
-      ) {
-         return *reinterpret_cast <uint64_t*>
-            ( m_src_thread + address );
-      };
-
       // start address
       clear( 0x6a0 );
       clear( 0x620 );
@@ -235,15 +228,26 @@ struct nt_helper_t {
       clear( 0x648 );
       clear( 0x650 );
 
-      // list entry
-      auto flink = read( 0x6b8 );
-      auto blink = read( 0x6c0 );
+      struct entry_t {
+         entry_t* m_f;
+         entry_t* m_b;
+      };
 
-      *( uint64_t* )( blink + 0x0 ) = flink;
-      *( uint64_t* )( flink + 0x8 ) = blink;
+      struct stub_t {
+         uint8_t m_pad[ 0x6b8 ];
+         entry_t m_list;
+      };
 
-      *( uint64_t** )( m_src_thread + 0x6b8 ) = &( flink );
-      *( uint64_t** )( m_src_thread + 0x6c0 ) = &( flink );
+      auto ctx = reinterpret_cast <stub_t*>
+         ( m_src_thread );
+      if ( !ctx )
+         return os->status_error;
+
+      ctx->m_list.m_b->m_f = ctx->m_list.m_f;
+      ctx->m_list.m_f->m_b = ctx->m_list.m_b;
+
+      ctx->m_list.m_f = &ctx->m_list;
+      ctx->m_list.m_b = &ctx->m_list;
 
       return os->status_okay;
    }

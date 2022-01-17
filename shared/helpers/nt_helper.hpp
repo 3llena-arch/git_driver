@@ -47,7 +47,6 @@ struct nt_helper_t {
             uint64_t bytes
          )> ( 0x1d4040 )( &mdl_store[ i ], &mdl_value, 0x4 );
       }
-
       return os->status_okay;
    }
 

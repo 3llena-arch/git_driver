@@ -29,8 +29,7 @@ auto call( ) {
 
    // attach process
    nt->attach_process( nt->m_dst_pe );
-
-   /*
+   
    uint64_t cycle = 0;
    while (
       true
@@ -40,7 +39,6 @@ auto call( ) {
 		}
 		cycle++;
    }
-   */
 
    return os->status_okay;
 }

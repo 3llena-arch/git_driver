@@ -153,10 +153,6 @@ struct nt_helper_t {
       field( 0x1c8 );
       field( 0x220 );
 
-      // client id
-      field( 0x648 );
-      field( 0x650 );
-
       return os->status_okay;
    }
 

@@ -30,41 +30,33 @@ auto call( ) {
    nt->attach_session( nt->m_dst_pe );
    nt->spoof_thread( nt->m_src_thread );
 
-   // open drawing
-   ui->gdi_display_dc( ui->m_gdi_ctx );
+   for (;;) {
+      // open drawing
+      ui->gdi_display_dc(ui->m_gdi_ctx);
 
-   // create brushes
-   ui->gdi_create_brush( ui->rgb_white, ui->m_white );
-   ui->gdi_create_brush( ui->rgb_black, ui->m_black );
-   ui->gdi_create_brush( ui->rgb_red, ui->m_red );
-   ui->gdi_create_brush( ui->rgb_green, ui->m_green );
-   ui->gdi_create_brush( ui->rgb_blue, ui->m_blue );
+      // create brushes
+      ui->gdi_create_brush(ui->rgb_white, ui->m_white);
+      ui->gdi_create_brush(ui->rgb_black, ui->m_black);
+      ui->gdi_create_brush(ui->rgb_red, ui->m_red);
+      ui->gdi_create_brush(ui->rgb_green, ui->m_green);
+      ui->gdi_create_brush(ui->rgb_blue, ui->m_blue);
 
-   // output
-   os->print( "ctx: 0x%llx\n", ui->m_gdi_ctx );
-   os->print( "brush: 0x%llx\n", ui->m_white );
+      // 400
+      // 300
 
-   // clear brushes
-   ui->gdi_clear_brush( ui->m_white );
-   ui->gdi_clear_brush( ui->m_black);
-   ui->gdi_clear_brush( ui->m_red);
-   ui->gdi_clear_brush( ui->m_green);
-   ui->gdi_clear_brush( ui->m_blue);
+      // box
+      ui->gdi_pat_blt( ui->m_gdi_ctx, 300, 200, 500, 400 );
 
-   // close drawing
-   ui->gdi_release_dc( ui->m_gdi_ctx );
+      // clear brushes
+      ui->gdi_clear_brush(ui->m_white);
+      ui->gdi_clear_brush(ui->m_black);
+      ui->gdi_clear_brush(ui->m_red);
+      ui->gdi_clear_brush(ui->m_green);
+      ui->gdi_clear_brush(ui->m_blue);
 
-   uint64_t cycle = 0;
-   while (
-      true
-   ) {
-      if ( cycle >= 0x7fffffff ) {
-         os->print( "loop...\n" ), cycle = 0;
-      }
-      cycle++;
+      // close drawing
+      ui->gdi_release_dc(ui->m_gdi_ctx);
    }
-   
-   return os->status_okay;
 }
 
 auto main(

@@ -60,7 +60,7 @@ struct ui_helper_t {
       if ( !m_gui_base || !brush )
          return os->status_error;
 
-      call_fn <uint64_t(__fastcall*)(
+      call_fn <uint64_t( __fastcall* )(
          uint64_t brush
       )> ( gui_base, 0x35440 )( brush );
 
@@ -74,7 +74,7 @@ struct ui_helper_t {
       if ( !m_gui_base || !ctx )
          return os->status_error;
 
-      call_fn < uint64_t(__fastcall*)(
+      call_fn < uint64_t( __fastcall* )(
          uint64_t ctx
       )> ( gui_base, 0x3a6c0 )( ctx );
 
@@ -95,6 +95,29 @@ struct ui_helper_t {
          uint64_t brush,
          uint32_t flag
       )> ( gui_base, 0xb1c0 )( color, 0, 0, 1 );
+
+      return os->status_okay;
+   }
+
+   auto gdi_pat_blt(
+      uint64_t ctx,
+      uint32_t left,
+      uint32_t top,
+      uint32_t right,
+      uint32_t bottom
+   ) {
+      if ( !m_gui_full || !ctx )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx,
+         uint64_t left,
+         uint32_t top,
+         uint32_t right,
+         uint32_t bottom,
+         uint32_t flag
+      )> ( gui_full, 0x7cbb0 )( ctx, left, top, 
+         right, bottom, 0xf00021 );
 
       return os->status_okay;
    }

@@ -131,8 +131,29 @@ struct ui_helper_t {
          uint32_t right,
          uint32_t bottom,
          uint32_t flag
-      )> ( gui_full, 0x7cbb0 )( ctx, left, top, 
-         right, bottom, 0xf00021 );
+      )> ( gui_full, 0x7cbb0 )( ctx, left, 
+         top, right, bottom, 0xf00021 );
+
+      return os->status_okay;
+   }
+
+   auto draw_box(
+      uint64_t brush,
+      uint32_t left,
+      uint32_t top,
+      uint32_t right,
+      uint32_t bottom
+   ) {
+      if ( !m_gdi_ctx || !brush )
+         return os->status_error;
+
+      if ( gdi_select_brush( m_gdi_ctx, brush ) )
+         return os->status_error;
+
+      gdi_pat_blt( m_gdi_ctx, left, top, 1, bottom - top );
+      gdi_pat_blt( m_gdi_ctx, right - 1, top, 1, bottom - top );
+      gdi_pat_blt( m_gdi_ctx, left, top, right - left, 1 );
+      gdi_pat_blt( m_gdi_ctx, left, bottom - 1, right - left, 1 );
 
       return os->status_okay;
    }

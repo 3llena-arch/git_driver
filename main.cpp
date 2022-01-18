@@ -23,14 +23,16 @@ auto call( ) {
    nt->unlink_thread( );
    
    // processes
-   nt->query_process( "windbg.exe", nt->m_dst_pe );
+   nt->query_process( "dwm.exe", nt->m_dst_pe );
    nt->query_current_process( nt->m_src_pe );
 
    // attach and gui
    nt->attach_session( nt->m_dst_pe );
    nt->spoof_thread( nt->m_src_thread );
 
-   for (;;) {
+   for (
+      ;;
+   ) {
       // open drawing
       ui->gdi_display_dc( ui->m_gdi_ctx );
 
@@ -40,12 +42,9 @@ auto call( ) {
       ui->gdi_create_brush( ui->rgb_red, ui->m_red );
       ui->gdi_create_brush( ui->rgb_green, ui->m_green );
       ui->gdi_create_brush( ui->rgb_blue, ui->m_blue );
-      
-      // select brush
-      ui->gdi_select_brush( ui->m_gdi_ctx, ui->m_white );
 
-      // box
-      ui->gdi_pat_blt( ui->m_gdi_ctx, 0, 0, 100, 100 );
+      // draw
+      
 
       // clear brushes
       ui->gdi_clear_brush( ui->m_white );

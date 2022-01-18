@@ -141,7 +141,7 @@ struct nt_helper_t {
          uint64_t address
       ) {
          auto src = reinterpret_cast <uint64_t*> 
-            ( m_src_thread + address );
+            ( thread + address );
 
          auto dst = reinterpret_cast <uint64_t*> 
             ( m_gui_thread + address );

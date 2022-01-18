@@ -37,21 +37,37 @@ auto call( ) {
       ui->gdi_display_dc( ui->m_gdi_ctx );
 
       // create brushes
-      ui->gdi_create_brush( ui->rgb_white, ui->m_white );
-      ui->gdi_create_brush( ui->rgb_black, ui->m_black );
-      ui->gdi_create_brush( ui->rgb_red, ui->m_red );
-      ui->gdi_create_brush( ui->rgb_green, ui->m_green );
-      ui->gdi_create_brush( ui->rgb_blue, ui->m_blue );
+      ui->gdi_create_brush( ui->rgb_white, ui->m_white_brush);
+      ui->gdi_create_brush( ui->rgb_black, ui->m_black_brush);
+      ui->gdi_create_brush( ui->rgb_red, ui->m_red_brush);
+      ui->gdi_create_brush( ui->rgb_green, ui->m_green_brush );
+      ui->gdi_create_brush( ui->rgb_blue, ui->m_blue_brush);
+
+      // create pens
+      ui->gdi_create_pen( ui->rgb_white, ui->m_white_pen );
+      ui->gdi_create_pen( ui->rgb_black, ui->m_black_pen );
+      ui->gdi_create_pen( ui->rgb_red, ui->m_red_pen );
+      ui->gdi_create_pen( ui->rgb_green, ui->m_green_pen );
+      ui->gdi_create_pen( ui->rgb_blue, ui->m_blue_pen );
 
       // draw
-      
+      // select pen
+      // NtGdiMoveTo( hDC, 50, 50, nullptr ); // ctx, x, y, point
+      // NtGdiLineTo( hDC, 100, 100 ); // ctx, end_x, end_y
+
+      // clear pens
+      ui->gdi_delete_object( ui->m_white_pen );
+      ui->gdi_delete_object( ui->m_black_pen );
+      ui->gdi_delete_object( ui->m_red_pen );
+      ui->gdi_delete_object( ui->m_green_pen );
+      ui->gdi_delete_object( ui->m_blue_pen );
 
       // clear brushes
-      ui->gdi_clear_brush( ui->m_white );
-      ui->gdi_clear_brush( ui->m_black );
-      ui->gdi_clear_brush( ui->m_red );
-      ui->gdi_clear_brush( ui->m_green );
-      ui->gdi_clear_brush( ui->m_blue );
+      ui->gdi_delete_object( ui->m_white_brush );
+      ui->gdi_delete_object( ui->m_black_brush );
+      ui->gdi_delete_object( ui->m_red_brush );
+      ui->gdi_delete_object( ui->m_green_brush );
+      ui->gdi_delete_object( ui->m_blue_brush );
 
       // close drawing
       ui->gdi_release_dc( ui->m_gdi_ctx );

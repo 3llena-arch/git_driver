@@ -6,11 +6,17 @@ struct ui_helper_t {
 
    uint64_t m_gdi_ctx;
 
-   uint64_t m_white;
-   uint64_t m_black;
-   uint64_t m_red;
-   uint64_t m_green;
-   uint64_t m_blue;
+   uint64_t m_white_brush;
+   uint64_t m_black_brush;
+   uint64_t m_red_brush;
+   uint64_t m_green_brush;
+   uint64_t m_blue_brush;
+
+   uint64_t m_white_pen;
+   uint64_t m_black_pen;
+   uint64_t m_red_pen;
+   uint64_t m_green_pen;
+   uint64_t m_blue_pen;
 
    auto init(
       data_t* data
@@ -54,17 +60,17 @@ struct ui_helper_t {
       return os->status_okay;
    }
 
-   auto gdi_clear_brush(
-      uint64_t& brush
+   auto gdi_delete_object(
+      uint64_t& object
    ) {
-      if ( !m_gui_base || !brush )
+      if ( !m_gui_base || !object )
          return os->status_error;
 
       call_fn <uint64_t( __fastcall* )(
          uint64_t brush
-      )> ( gui_base, 0x35440 )( brush );
+      )> ( gui_base, 0x35440 )( object );
 
-      brush = 0;
+      object = 0;
       return os->status_okay;
    }
 
@@ -79,6 +85,23 @@ struct ui_helper_t {
       )> ( gui_base, 0x3a6c0 )( ctx );
 
       ctx = 0;
+      return os->status_okay;
+   }
+
+   auto gdi_create_pen(
+      color_t color,
+      uint64_t& pen
+   ) {
+      if ( !m_gui_full )
+         return os->status_error;
+
+      pen = call_fn <uint64_t( __fastcall* )(
+         uint32_t style,
+         uint32_t width,
+         uint32_t color,
+         uint64_t brush
+      )> ( gui_full, 0x10aa74 )( 0, 1, color, 0 );
+
       return os->status_okay;
    }
 
@@ -110,6 +133,21 @@ struct ui_helper_t {
          uint64_t ctx, 
          uint64_t brush
       )> ( gui_full, 0x2a8ba0 )( ctx, brush );
+
+      return os->status_okay;
+   }
+
+   auto gdi_select_pen(
+      uint64_t ctx,
+      uint64_t pen
+   ) {
+      if ( !m_gui_base || !pen )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx, 
+         uint64_t pen
+      )> ( gui_base, 0x6f160)( ctx, pen );
 
       return os->status_okay;
    }

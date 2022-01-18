@@ -88,6 +88,20 @@ struct ui_helper_t {
       return os->status_okay;
    }
 
+   auto gdi_set_transparent(
+      uint64_t ctx
+   ) {
+      if ( !m_gui_full || !ctx )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx,
+         uint32_t color
+      )> ( gui_full, 0x14f50 )( ctx, 1 );
+
+      return os->status_okay;
+   }
+
    auto gdi_create_pen(
       color_t color,
       uint64_t& pen
@@ -100,7 +114,7 @@ struct ui_helper_t {
          uint32_t width,
          uint32_t color,
          uint64_t brush
-      )> ( gui_full, 0x10aa74 )( 0, 1, color, 0 );
+      )> ( gui_full, 0x10aa74 )( 0, 5, color, 0 );
 
       return os->status_okay;
    }
@@ -147,17 +161,17 @@ struct ui_helper_t {
       call_fn <uint64_t( __fastcall* )(
          uint64_t ctx, 
          uint64_t pen
-      )> ( gui_base, 0x6f160)( ctx, pen );
+      )> ( gui_full, 0x2a8bc0 )( ctx, pen );
 
       return os->status_okay;
    }
 
    auto gdi_pat_blt(
       uint64_t ctx,
-      uint32_t left,
-      uint32_t top,
-      uint32_t right,
-      uint32_t bottom
+      uint32_t src_x,
+      uint32_t src_y,
+      uint32_t dst_x,
+      uint32_t dst_y
    ) {
       if ( !m_gui_full || !ctx )
          return os->status_error;
@@ -169,18 +183,75 @@ struct ui_helper_t {
          uint32_t right,
          uint32_t bottom,
          uint32_t flag
-      )> ( gui_full, 0x7cbb0 )( ctx, left, 
-         top, right, bottom, 0xf00021 );
+      )> ( gui_full, 0x7cbb0 )( ctx, src_x, 
+         src_y, dst_x, dst_y, 0xf00021 );
+
+      return os->status_okay;
+   }
+
+   auto gdi_move_to(
+      uint64_t ctx,
+      uint32_t src_x,
+      uint32_t src_y
+   ) {
+      if ( !m_gui_full || !ctx )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx,
+         uint32_t src_x,
+         uint32_t src_y,
+         uint64_t unused
+      )> ( gui_full, 0x269cac )( ctx, src_x, src_y, 0 );
+
+      return os->status_okay;
+   }
+
+   auto gdi_line_to(
+      uint64_t ctx,
+      uint32_t dst_x,
+      uint32_t dst_y
+   ) {
+      if ( !m_gui_full || !ctx )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx,
+         uint32_t dst_x,
+         uint32_t dst_y
+      )> ( gui_full, 0x7799c )( ctx, dst_x, dst_y );
+
+      return os->status_okay;
+   }
+   
+   auto draw_line(
+      uint64_t pen,
+      uint32_t src_x,
+      uint32_t src_y,
+      uint32_t dst_x,
+      uint32_t dst_y
+   ) {
+      if ( !m_gdi_ctx || !pen )
+         return os->status_error;
+
+      if ( gdi_select_pen( m_gdi_ctx, pen ) )
+         return os->status_error;
+
+      if ( gdi_set_transparent( m_gdi_ctx ) )
+         return os->status_warning;
+
+      gdi_move_to( m_gdi_ctx, src_x, src_y );
+      gdi_line_to( m_gdi_ctx, dst_x, dst_y );
 
       return os->status_okay;
    }
 
    auto draw_box(
       uint64_t brush,
-      uint32_t left,
-      uint32_t top,
-      uint32_t right,
-      uint32_t bottom
+      uint32_t src_x,
+      uint32_t src_y,
+      uint32_t dst_x,
+      uint32_t dst_y
    ) {
       if ( !m_gdi_ctx || !brush )
          return os->status_error;
@@ -188,10 +259,10 @@ struct ui_helper_t {
       if ( gdi_select_brush( m_gdi_ctx, brush ) )
          return os->status_error;
 
-      gdi_pat_blt( m_gdi_ctx, left, top, 1, bottom - top );
-      gdi_pat_blt( m_gdi_ctx, right - 1, top, 1, bottom - top );
-      gdi_pat_blt( m_gdi_ctx, left, top, right - left, 1 );
-      gdi_pat_blt( m_gdi_ctx, left, bottom - 1, right - left, 1 );
+      gdi_pat_blt( m_gdi_ctx, src_x, src_y, 1, dst_y - src_y );
+      gdi_pat_blt( m_gdi_ctx, dst_x - 1, src_y, 1, dst_y - src_y );
+      gdi_pat_blt( m_gdi_ctx, src_x, src_y, dst_x - src_x, 1 );
+      gdi_pat_blt( m_gdi_ctx, src_x, dst_y - 1, dst_x - src_x, 1 );
 
       return os->status_okay;
    }

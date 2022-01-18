@@ -32,30 +32,30 @@ auto call( ) {
 
    for (;;) {
       // open drawing
-      ui->gdi_display_dc(ui->m_gdi_ctx);
+      ui->gdi_display_dc( ui->m_gdi_ctx );
 
       // create brushes
-      ui->gdi_create_brush(ui->rgb_white, ui->m_white);
-      ui->gdi_create_brush(ui->rgb_black, ui->m_black);
-      ui->gdi_create_brush(ui->rgb_red, ui->m_red);
-      ui->gdi_create_brush(ui->rgb_green, ui->m_green);
-      ui->gdi_create_brush(ui->rgb_blue, ui->m_blue);
-
-      // 400
-      // 300
+      ui->gdi_create_brush( ui->rgb_white, ui->m_white );
+      ui->gdi_create_brush( ui->rgb_black, ui->m_black );
+      ui->gdi_create_brush( ui->rgb_red, ui->m_red );
+      ui->gdi_create_brush( ui->rgb_green, ui->m_green );
+      ui->gdi_create_brush( ui->rgb_blue, ui->m_blue );
+      
+      // select brush
+      ui->gdi_select_brush( ui->m_gdi_ctx, ui->m_white );
 
       // box
-      ui->gdi_pat_blt( ui->m_gdi_ctx, 300, 200, 500, 400 );
+      ui->gdi_pat_blt( ui->m_gdi_ctx, 0, 0, 100, 100 );
 
       // clear brushes
-      ui->gdi_clear_brush(ui->m_white);
-      ui->gdi_clear_brush(ui->m_black);
-      ui->gdi_clear_brush(ui->m_red);
-      ui->gdi_clear_brush(ui->m_green);
-      ui->gdi_clear_brush(ui->m_blue);
+      ui->gdi_clear_brush( ui->m_white );
+      ui->gdi_clear_brush( ui->m_black );
+      ui->gdi_clear_brush( ui->m_red );
+      ui->gdi_clear_brush( ui->m_green );
+      ui->gdi_clear_brush( ui->m_blue );
 
       // close drawing
-      ui->gdi_release_dc(ui->m_gdi_ctx);
+      ui->gdi_release_dc( ui->m_gdi_ctx );
    }
 }
 

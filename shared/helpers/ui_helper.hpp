@@ -349,8 +349,8 @@ struct ui_helper_t {
       if ( gdi_select_pen( m_gdi_src, pen ) )
          return os->status_error;
 
-      if ( gdi_set_color( m_gdi_src, rgb_black ) )
-         return os->status_error;
+      //if ( gdi_set_color( m_gdi_src, rgb_black ) )
+      //   return os->status_error;
 
       if ( gdi_set_transparent( m_gdi_src ) )
          return os->status_warning;

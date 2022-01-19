@@ -23,7 +23,7 @@ auto call( ) {
    nt->unlink_thread( );
    
    // processes
-   nt->query_process( "dwm.exe", nt->m_dst_pe );
+   nt->query_process( "windbg.exe", nt->m_dst_pe );
    nt->query_current_process( nt->m_src_pe );
 
    // attach and gui
@@ -59,7 +59,7 @@ auto call( ) {
       ui->gdi_create_pen( ui->rgb_blue, ui->m_blue_pen );
 
       // draw
-      ui->draw_box( ui->m_white_brush, 300, 300, 500, 500 );
+      //ui->draw_box( ui->m_white_brush, 300, 300, 500, 500 );
       ui->draw_line( ui->m_white_pen, 0, 0, 200, 200 );
 
       // copy buffer

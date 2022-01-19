@@ -5,9 +5,6 @@ struct ui_helper_t {
    uint64_t m_gui_full;
 
    uint64_t m_gdi_ctx;
-   uint64_t m_gdi_src;
-
-   uint64_t m_gdi_bitmap;
 
    uint64_t m_white_brush;
    uint64_t m_black_brush;
@@ -343,20 +340,20 @@ struct ui_helper_t {
       uint32_t dst_x,
       uint32_t dst_y
    ) {
-      if ( !m_gdi_src || !pen )
+      if ( !m_gdi_ctx || !pen )
          return os->status_error;
 
-      if ( gdi_select_pen( m_gdi_src, pen ) )
+      if ( gdi_select_pen( m_gdi_ctx, pen ) )
          return os->status_error;
 
-      //if ( gdi_set_color( m_gdi_src, rgb_black ) )
-      //   return os->status_error;
+      if ( gdi_set_color( m_gdi_ctx, rgb_black ) )
+         return os->status_error;
 
-      if ( gdi_set_transparent( m_gdi_src ) )
+      if ( gdi_set_transparent( m_gdi_ctx ) )
          return os->status_warning;
 
-      gdi_move_to( m_gdi_src, src_x, src_y );
-      gdi_line_to( m_gdi_src, dst_x, dst_y );
+      gdi_move_to( m_gdi_ctx, src_x, src_y );
+      gdi_line_to( m_gdi_ctx, dst_x, dst_y );
 
       return os->status_okay;
    }
@@ -368,16 +365,16 @@ struct ui_helper_t {
       uint32_t dst_x,
       uint32_t dst_y
    ) {
-      if ( !m_gdi_src || !brush )
+      if ( !m_gdi_ctx || !brush )
          return os->status_error;
 
-      if ( gdi_select_brush( m_gdi_src, brush ) )
+      if ( gdi_select_brush( m_gdi_ctx, brush ) )
          return os->status_error;
 
-      gdi_pat_blt( m_gdi_src, src_x, src_y, 1, dst_y - src_y );
-      gdi_pat_blt( m_gdi_src, dst_x - 1, src_y, 1, dst_y - src_y );
-      gdi_pat_blt( m_gdi_src, src_x, src_y, dst_x - src_x, 1 );
-      gdi_pat_blt( m_gdi_src, src_x, dst_y - 1, dst_x - src_x, 1 );
+      gdi_pat_blt( m_gdi_ctx, src_x, src_y, 1, dst_y - src_y );
+      gdi_pat_blt( m_gdi_ctx, dst_x - 1, src_y, 1, dst_y - src_y );
+      gdi_pat_blt( m_gdi_ctx, src_x, src_y, dst_x - src_x, 1 );
+      gdi_pat_blt( m_gdi_ctx, src_x, dst_y - 1, dst_x - src_x, 1 );
 
       return os->status_okay;
    }

@@ -88,6 +88,21 @@ struct ui_helper_t {
       return os->status_okay;
    }
 
+   auto gdi_set_color(
+      uint64_t ctx,
+      color_t color
+   ) {
+      if ( !m_gui_full || !ctx )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx,
+         uint32_t color
+      )> ( gui_full, 0x14f50 )( ctx, color );
+
+      return os->status_okay;
+   }
+
    auto gdi_set_transparent(
       uint64_t ctx
    ) {
@@ -98,6 +113,19 @@ struct ui_helper_t {
          uint64_t ctx,
          uint32_t color
       )> ( gui_full, 0x14f50 )( ctx, 1 );
+
+      return os->status_okay;
+   }
+
+   auto gdi_stock_pen(
+      uint64_t& pen
+   ) {
+      if ( !m_gui_base )
+         return os->status_error;
+
+      pen = call_fn <uint64_t( __fastcall* )(
+         uint32_t flag
+      )> ( gui_base, 0x265f0 )( 6 );
 
       return os->status_okay;
    }
@@ -223,7 +251,7 @@ struct ui_helper_t {
 
       return os->status_okay;
    }
-   
+
    auto draw_line(
       uint64_t pen,
       uint32_t src_x,
@@ -235,6 +263,9 @@ struct ui_helper_t {
          return os->status_error;
 
       if ( gdi_select_pen( m_gdi_ctx, pen ) )
+         return os->status_error;
+
+      if ( gdi_set_color( m_gdi_ctx, rgb_black ) )
          return os->status_error;
 
       if ( gdi_set_transparent( m_gdi_ctx ) )

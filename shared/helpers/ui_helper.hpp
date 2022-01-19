@@ -199,7 +199,8 @@ struct ui_helper_t {
       uint32_t src_x,
       uint32_t src_y,
       uint32_t dst_x,
-      uint32_t dst_y
+      uint32_t dst_y,
+      uint32_t flag = 0xf00021
    ) {
       if ( !m_gui_full || !ctx )
          return os->status_error;
@@ -212,7 +213,7 @@ struct ui_helper_t {
          uint32_t bottom,
          uint32_t flag
       )> ( gui_full, 0x7cbb0 )( ctx, src_x, 
-         src_y, dst_x, dst_y, 0xf00021 );
+         src_y, dst_x, dst_y, flag );
 
       return os->status_okay;
    }
@@ -248,6 +249,39 @@ struct ui_helper_t {
          uint32_t dst_x,
          uint32_t dst_y
       )> ( gui_full, 0x7799c )( ctx, dst_x, dst_y );
+
+      return os->status_okay;
+   }
+
+   auto gdi_bit_blt(
+      uint64_t ctx,
+      uint32_t src_x,
+      uint32_t src_y,
+      uint32_t width,
+      uint32_t height,
+      uint64_t src,
+      uint32_t dst_x,
+      uint32_t dst_y,
+      color_t color,
+      uint32_t flag = 0xcc0020
+   ) {
+      if ( !m_gui_full || !ctx || !src )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx,
+         uint32_t dst_x,
+         uint32_t dst_y,
+         uint32_t width,
+         uint32_t height,
+         uint64_t src,
+         uint32_t src_x,
+         uint32_t src_y,
+         uint32_t rop,
+         uint32_t color,
+         uint8_t flag
+      )> ( gui_full, 0x8be70 )( ctx, src_x, src_y, width, 
+         height, src, dst_x, dst_y, flag, color, 0 );
 
       return os->status_okay;
    }

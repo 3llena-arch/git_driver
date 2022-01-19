@@ -52,7 +52,7 @@ auto call( ) {
 
       // draw
       ui->draw_box( ui->m_white_brush, 300, 300, 500, 500 );
-      ui->draw_line( stock_white, 0, 0, 200, 200 );
+      ui->draw_line( ui->m_white_pen, 0, 0, 200, 200 );
 
       // clear pens
       ui->gdi_delete_object( ui->m_white_pen );

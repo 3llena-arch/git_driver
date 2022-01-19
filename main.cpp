@@ -35,6 +35,7 @@ auto call( ) {
    ) {
       // open drawing
       ui->gdi_display_dc( ui->m_gdi_ctx );
+      ui->gdi_compatible_dc( ui->m_gdi_ctx, ui->m_gdi_src );
 
       // create brushes
       ui->gdi_create_brush( ui->rgb_white, ui->m_white_brush);
@@ -69,6 +70,7 @@ auto call( ) {
       ui->gdi_delete_object( ui->m_blue_brush );
 
       // close drawing
+      ui->gdi_release_dc( ui->m_gdi_src );
       ui->gdi_release_dc( ui->m_gdi_ctx );
    }
 }

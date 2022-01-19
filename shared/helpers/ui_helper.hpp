@@ -5,6 +5,7 @@ struct ui_helper_t {
    uint64_t m_gui_full;
 
    uint64_t m_gdi_ctx;
+   uint64_t m_gdi_src;
 
    uint64_t m_white_brush;
    uint64_t m_black_brush;
@@ -56,6 +57,20 @@ struct ui_helper_t {
       ctx = call_fn <uint64_t( __fastcall* )(
          uint64_t window
       )> ( gui_base, 0x3a430 )( 0 );
+
+      return os->status_okay;
+   }
+
+   auto gdi_compatible_dc(
+      uint64_t ctx,
+      uint64_t& src
+   ) {
+      if ( !m_gui_base || !ctx )
+         return os->status_error;
+
+      src = call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx
+      )> ( gui_base, 0x36a10 )( ctx );
 
       return os->status_okay;
    }

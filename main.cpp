@@ -37,6 +37,13 @@ auto call( ) {
       ui->gdi_display_dc( ui->m_gdi_ctx );
       ui->gdi_compatible_dc( ui->m_gdi_ctx, ui->m_gdi_src );
 
+      // create bitmap
+      ui->gdi_compatible_bitmap( ui->m_gdi_ctx, 800, 600,
+         ui->m_gdi_bitmap );
+
+      // select bitmap
+      ui->gdi_select_bitmap( ui->m_gdi_src, ui->m_gdi_bitmap );
+
       // create brushes
       ui->gdi_create_brush( ui->rgb_white, ui->m_white_brush);
       ui->gdi_create_brush( ui->rgb_black, ui->m_black_brush);
@@ -54,6 +61,13 @@ auto call( ) {
       // draw
       ui->draw_box( ui->m_white_brush, 300, 300, 500, 500 );
       ui->draw_line( ui->m_white_pen, 0, 0, 200, 200 );
+
+      // copy buffer
+      ui->gdi_bit_blt( ui->m_gdi_ctx, 0, 0, 800, 600,
+         ui->m_gdi_src, 0, 0, ui->rgb_black );
+
+      // delete bitmap
+      ui->gdi_delete_object( ui->m_gdi_bitmap );
 
       // clear pens
       ui->gdi_delete_object( ui->m_white_pen );

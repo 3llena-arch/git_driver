@@ -12,19 +12,7 @@ struct ui_helper_t {
    uint64_t m_green_brush;
    uint64_t m_blue_brush;
 
-   uint64_t m_white_pen;
-   uint64_t m_black_pen;
-   uint64_t m_red_pen;
-   uint64_t m_green_pen;
-   uint64_t m_blue_pen;
-
-   uint64_t m_oem_fixed_font;
-   uint64_t m_ansi_fixed_font;
-   uint64_t m_ansi_var_font;
    uint64_t m_system_font;
-   uint64_t m_device_default_font;
-   uint64_t m_system_fixed_font;
-   uint64_t m_default_gui_font;
 
    auto init(
       data_t* data
@@ -211,6 +199,33 @@ struct ui_helper_t {
          uint64_t brush,
          uint32_t flag
       )> ( gui_base, 0xb1c0 )( color, 0, 0, 1 );
+
+      return os->status_okay;
+   }
+
+   auto gdi_text_out(
+      uint64_t ctx,
+      uint32_t dst_x,
+      uint32_t dst_y,
+      wstring_t string,
+      uint32_t length
+   ) {
+      if ( !m_gui_full || !ctx || !string )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx,
+         uint32_t dst_x,
+         uint32_t dst_y,
+         uint32_t flip,
+         uint64_t flag,
+         wstring_t string,
+         uint32_t length,
+         uint64_t unused,
+         uint64_t reserved,
+         uint32_t safe
+      )> ( gui_full, 0x11339c )( ctx, dst_x, dst_y, 
+         0, 0, string, length, 0, 0, 0 );
 
       return os->status_okay;
    }

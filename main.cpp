@@ -45,7 +45,6 @@ auto call( ) {
 
       //
       // todo
-      // - SetTextColor
       // - ExtTextOutW
       // In the draw loop, we should really be attaching
       // setting the win32thread and kprocess, drawing
@@ -54,10 +53,14 @@ auto call( ) {
       // 
 
       ui->draw_line( 0, 0, 800, 600, ui->rgb_white );
-      ui->draw_line( 800, 0, 0, 600, ui->rgb_white );
-      ui->draw_line( 0, 300, 800, 300, ui->rgb_white );
-      ui->draw_line( 400, 0, 400, 600, ui->rgb_white );
+      ui->draw_line( 0, 0, 799, 599, ui->rgb_white );
+      ui->draw_line( 0, 0, 798, 598, ui->rgb_white );
 
+      ui->gdi_stock_object( ui->m_system_font, ui->system_font );
+      ui->gdi_select_font( ui->m_gdi_ctx, ui->m_system_font );
+      ui->gdi_set_text_color( ui->m_gdi_ctx, ui->rgb_red );
+      ui->gdi_text_out( ui->m_gdi_ctx, 400, 300, L"Nigger", 7 );
+      
       // clear brushes
       ui->gdi_delete_object( ui->m_white_brush );
       ui->gdi_delete_object( ui->m_black_brush );

@@ -245,6 +245,21 @@ struct ui_helper_t {
       return os->status_okay;
    }
 
+   auto gdi_select_font(
+      uint64_t ctx,
+      uint64_t font
+   ) {
+      if ( !m_gui_full || !font )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx,
+         uint64_t font
+      )> ( gui_full, 0x13290 )( ctx, font );
+
+      return os->status_okay;
+   }
+
    auto gdi_select_pen(
       uint64_t ctx,
       uint64_t pen

@@ -401,7 +401,7 @@ struct ui_helper_t {
 
       return os->status_okay;
    }
-
+   
    auto draw_line(
       uint32_t src_x,
       uint32_t src_y,

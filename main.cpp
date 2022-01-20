@@ -50,6 +50,15 @@ auto call( ) {
       ui->gdi_create_pen( ui->rgb_green, ui->m_green_pen );
       ui->gdi_create_pen( ui->rgb_blue, ui->m_blue_pen );
 
+      // get fonts
+      ui->gdi_stock_object( ui->m_oem_fixed_font, ui->oem_fixed_font );
+      ui->gdi_stock_object( ui->m_ansi_fixed_font, ui->ansi_fixed_font );
+      ui->gdi_stock_object( ui->m_ansi_var_font, ui->ansi_var_font );
+      ui->gdi_stock_object( ui->m_system_font, ui->system_font );
+      ui->gdi_stock_object( ui->m_device_default_font, ui->device_default_font );
+      ui->gdi_stock_object( ui->m_system_fixed_font, ui->system_fixed_font );
+      ui->gdi_stock_object( ui->m_default_gui_font, ui->default_gui_font );
+
       // draw
       ui->draw_box( ui->m_white_brush, 300, 300, 500, 500 );
       ui->draw_line( ui->m_white_pen, 0, 0, 200, 200 );

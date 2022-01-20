@@ -12,7 +12,7 @@ struct os_helper_t {
    }
 
    enum state_t : uint32_t {
-      status_okay = 0,
+      status_okay,
       status_warning,
       status_error,
    };

@@ -18,6 +18,14 @@ struct ui_helper_t {
    uint64_t m_green_pen;
    uint64_t m_blue_pen;
 
+   uint64_t m_oem_fixed_font;
+   uint64_t m_ansi_fixed_font;
+   uint64_t m_ansi_var_font;
+   uint64_t m_system_font;
+   uint64_t m_device_default_font;
+   uint64_t m_system_fixed_font;
+   uint64_t m_default_gui_font;
+
    auto init(
       data_t* data
    ) {
@@ -26,12 +34,22 @@ struct ui_helper_t {
    }
 
    enum gui_call_t : uint64_t {
-      gui_base = 0,
+      gui_base,
       gui_full
    };
 
+   enum font_t : uint64_t {
+      oem_fixed_font = 0xa,
+      ansi_fixed_font,
+      ansi_var_font,
+      system_font,
+      device_default_font,
+      system_fixed_font = 0x10,
+      default_gui_font
+   };
+
    enum color_t : uint64_t {
-      rgb_black = 0,
+      rgb_black,
       rgb_red = 0xff,
       rgb_green = 0xff00,
       rgb_blue = 0xff0000,
@@ -131,15 +149,16 @@ struct ui_helper_t {
       return os->status_okay;
    }
 
-   auto gdi_stock_pen(
-      uint64_t& pen
+   auto gdi_stock_object(
+      uint64_t& obj,
+      uint64_t object
    ) {
       if ( !m_gui_base )
          return os->status_error;
 
-      pen = call_fn <uint64_t( __fastcall* )(
+      obj = call_fn <uint64_t( __fastcall* )(
          uint32_t flag
-      )> ( gui_base, 0x265f0 )( 6 );
+      )> ( gui_base, 0x265f0 )( object );
 
       return os->status_okay;
    }

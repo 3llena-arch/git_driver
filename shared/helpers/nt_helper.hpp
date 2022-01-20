@@ -10,11 +10,27 @@ struct nt_helper_t {
    uint64_t m_src_thread;
    uint64_t m_gui_thread;
    
+   uint64_t m_gui_pe;
    uint64_t m_src_pe;
    uint64_t m_dst_pe;
 
    uint64_t m_cid_table;
    uint64_t m_cid_entry;
+
+   struct apc_stub_t {
+      uint8_t m_pad1[ 0x30 ];
+   };
+
+   struct thread_stub_t {
+      uint8_t m_pad1[ 0x6b8 ];
+      struct list_t {
+         list_t* m_fwd;
+         list_t* m_bck;
+      } m_list;
+   };
+
+   apc_stub_t m_session_apc;
+   apc_stub_t m_process_apc;
 
    auto init(
       data_t* data
@@ -127,11 +143,11 @@ struct nt_helper_t {
    auto spoof_thread(
       uint64_t thread
    ) {
-      if ( !m_ctx || !m_dst_pe )
+      if ( !m_ctx || !m_gui_pe )
          return os->status_error;
 
       auto ctx = *reinterpret_cast <uint64_t*>
-         ( m_dst_pe + 0x30 ) - 0x2f8;
+         ( m_gui_pe + 0x30 ) - 0x2f8;
       if ( !ctx )
          return os->status_error;
 
@@ -156,8 +172,37 @@ struct nt_helper_t {
       return os->status_okay;
    }
 
+   auto attach_process(
+      uint64_t process,
+      apc_stub_t apc
+   ) {
+      if ( !m_ctx )
+         return os->status_error;
+
+      call_fn <void( __stdcall* )(
+         uint64_t process,
+         apc_stub_t* apc
+      )> ( 0x67c50 )( process, &apc );
+
+      return os->status_okay;
+   }
+
+   auto detach_process(
+      apc_stub_t apc
+   ) {
+      if ( !m_ctx )
+         return os->status_error;
+
+      call_fn <void( __stdcall* )(
+         apc_stub_t* apc
+      )> ( 0x35430 )( &apc );
+
+      return os->status_okay;
+   }
+
    auto attach_session(
       uint64_t process,
+      apc_stub_t apc,
       uint64_t session = 0,
       uint32_t id = 0
    ) {
@@ -172,16 +217,10 @@ struct nt_helper_t {
          uint32_t id
       )> ( 0x23f0 )( id );
 
-      struct stub_t {
-         uint8_t m_pad1[0x30];
-      };
-
-      stub_t stub;
-
       call_fn <uint64_t( __fastcall* )(
          uint64_t session,
-         stub_t* state
-      )> ( 0xe9e00 )( session, &stub );
+         apc_stub_t* state
+      )> ( 0xe9e00 )( session, &apc );
 
       return os->status_okay;
    }
@@ -288,15 +327,7 @@ struct nt_helper_t {
       field( 0x648 );
       field( 0x650 );
 
-      struct stub_t {
-         uint8_t m_pad1[ 0x6b8 ];
-         struct list_t {
-            list_t* m_fwd;
-            list_t* m_bck;
-         } m_list;
-      };
-
-      auto ctx = reinterpret_cast <stub_t*>
+      auto ctx = reinterpret_cast <thread_stub_t*>
          ( m_src_thread );
       if ( !ctx )
          return os->status_error;

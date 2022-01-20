@@ -412,48 +412,30 @@ struct ui_helper_t {
       if ( !m_gdi_ctx )
          return os->status_error;
 
-      auto abs = [](int i) {
+      auto abs = [ ]( int i ) {
          return i < 0 ? -i : i;
       };
-      if ((dst_y - src_y) == 0) {
-         auto delta_x = dst_x - src_x;
-         for ( auto i = src_x; i < src_x + delta_x; i++)
-            gdi_set_pixel( m_gdi_ctx, i, dst_y, color );
-      }
-      else if ((dst_x - src_x) == 0) {
-         auto delta_y = dst_y - src_y;
-         for (auto i = src_y; i < src_y + delta_y; i++)
-            gdi_set_pixel(m_gdi_ctx, dst_x, i, color);
-      }
-      else {
-         int w = dst_x - src_x;
-         int h = dst_y - src_y;
-         int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
-         if (w < 0) dx1 = -1; else if (w > 0) dx1 = 1;
-         if (h < 0) dy1 = -1; else if (h > 0) dy1 = 1;
-         if (w < 0) dx2 = -1; else if (w > 0) dx2 = 1;
-         int longest = abs(w);
-         int shortest = abs(h);
-         if (!(longest > shortest)) {
-            longest = abs(h);
-            shortest = abs(w);
-            if (h < 0) dy2 = -1; else if (h > 0) dy2 = 1;
-            dx2 = 0;
-         }
-         int numerator = longest >> 1;
-         for (int i = 0; i <= longest; i++) {
-            gdi_set_pixel(m_gdi_ctx, src_x, src_y, color);
-            numerator += shortest;
-            if (!(numerator < longest)) {
-               numerator -= longest;
-               src_x += dx1;
-               src_y += dy1;
-            }
-            else {
-               src_x += dx2;
-               src_y += dy2;
-            }
-         }
+
+
+
+      int dx = abs(dst_x - src_x);
+      int sx = src_x < dst_x ? 1 : -1;
+
+      int dy = abs(dst_y - src_y);
+      int sy = src_y < dst_y ? 1 : -1;
+
+      int err = (dx > dy ? dx : -dy) / 2, e2;
+
+      for (
+         ;;
+      ) {
+         gdi_set_pixel( m_gdi_ctx, src_x, src_y, color );
+         if (src_x == dst_x && src_y == dst_y) break;
+
+         e2 = err;
+
+         if (e2 > -dx) { err -= dy; src_x += sx; }
+         if (e2 < dy) { err += dx; src_y += sy; }
       }
 
       return os->status_okay;

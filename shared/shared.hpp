@@ -10,11 +10,17 @@
 #include <cstdarg>
 #include <cstring>
 
-// numbers
+// unsigned
 using uint64_t = unsigned long long;
 using uint32_t = unsigned int;
 using uint16_t = unsigned short;
 using uint8_t = unsigned char;
+
+// signed
+using int64_t = long long;
+using int32_t = int;
+using int16_t = short;
+using in8_t = char;
 
 // strings
 using wstring_t = wchar_t*;

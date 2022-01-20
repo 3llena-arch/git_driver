@@ -53,8 +53,6 @@ auto call( ) {
       // overhead in the stolen context.
       // 
 
-      // draw
-      //ui->draw_box( ui->m_white_brush, 300, 300, 500, 500 );
       ui->draw_line( 0, 0, 800, 600, ui->rgb_white );
       ui->draw_line( 800, 0, 0, 600, ui->rgb_white );
       ui->draw_line( 0, 300, 800, 300, ui->rgb_white );

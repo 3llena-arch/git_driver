@@ -215,6 +215,21 @@ struct ui_helper_t {
       return os->status_okay;
    }
 
+   auto gdi_set_text_color(
+      uint64_t ctx,
+      color_t color
+   ) {
+      if ( !m_gui_full || !ctx )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx,
+         uint32_t color
+      )> ( gui_full, 0x14e40 )( ctx, color );
+
+      return os->status_okay;
+   }
+
    auto gdi_select_brush(
       uint64_t ctx,
       uint64_t brush

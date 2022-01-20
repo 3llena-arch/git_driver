@@ -45,7 +45,6 @@ auto call( ) {
 
       //
       // todo
-      // - SetPixel
       // - SetTextColor
       // - ExtTextOutW
       // In the draw loop, we should really be attaching

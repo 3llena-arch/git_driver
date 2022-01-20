@@ -59,6 +59,17 @@ auto call( ) {
       ui->gdi_stock_object( ui->m_system_fixed_font, ui->system_fixed_font );
       ui->gdi_stock_object( ui->m_default_gui_font, ui->default_gui_font );
 
+      //
+      // todo
+      // - SetPixel
+      // - SetTextColor
+      // - ExtTextOutW
+      // In the draw loop, we should really be attaching
+      // setting the win32thread and kprocess, drawing
+      // then unsetting and detaching to avoid unecesarry
+      // overhead in the stolen context.
+      // 
+
       // draw
       ui->draw_box( ui->m_white_brush, 300, 300, 500, 500 );
       ui->draw_line( ui->m_white_pen, 0, 0, 200, 200 );

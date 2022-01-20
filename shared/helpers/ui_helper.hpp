@@ -245,6 +245,26 @@ struct ui_helper_t {
       return os->status_okay;
    }
 
+   auto gdi_set_pixel(
+      uint64_t ctx,
+      uint32_t dst_x,
+      uint32_t dst_y,
+      color_t color
+   ) {
+      if ( !m_gui_full || !ctx )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t ctx,
+         uint32_t dst_x,
+         uint32_t dst_y,
+         uint32_t color
+      )> ( gui_full, 0x141180 )( ctx, 
+         dst_x, dst_y, color );
+
+      return os->status_okay;
+   }
+
    auto gdi_select_font(
       uint64_t ctx,
       uint64_t font

@@ -99,6 +99,64 @@ struct nt_helper_t {
       return os->status_okay;
    }
 
+   auto query_image(
+      wstring_t name,
+      uint64_t process,
+      uint64_t& image,
+      uint64_t peb = 0,
+      uint64_t ldr = 0,
+      uint64_t ctx = 0
+   ) {
+      if ( !m_ctx || !process )
+         return os->status_error;
+
+      auto cmp = [ & ](
+         wstring_t string,
+         wstring_t substring
+      ) {
+         return !call_fn <uint32_t( __cdecl* )(
+            wstring_t string,
+            wstring_t substring
+         )> ( 0x19fb10 )( string, substring );
+      };
+
+      peb = *reinterpret_cast <uint64_t*>
+         ( process + 0x3f8 );
+      if ( !peb )
+         return os->status_error;
+
+      ldr = *reinterpret_cast <uint64_t*>
+         ( peb + 0x18 );
+      if ( !ldr )
+         return os->status_error;
+
+      ctx = **reinterpret_cast <uint64_t**>
+         ( ldr + 0x10 );
+      if ( !ctx )
+         return os->status_error;
+
+      do {
+         if ( !ctx )
+            continue;
+
+         wstring_t file = *reinterpret_cast <wstring_t*>
+            ( ctx + 0x60 );
+
+         os->print( "found %s\n", file );
+
+         if ( !cmp( file, name ) )
+            continue;
+
+         image = *reinterpret_cast <uint64_t*> 
+            ( ctx + 0x30 );
+         break;
+
+      } while ( ctx = *reinterpret_cast 
+         <uint64_t*> ( ctx ) );
+
+      return os->status_okay;
+   }
+
    auto query_process(
       string_t name,
       uint64_t& process,

@@ -40,6 +40,7 @@ auto call( ) {
 
    // grab player
    "UnityPlayer.dll";
+   // object_manager = *(uint64_t*)(UnityPlayer + 0x17F8D28)
 
    // detach
    nt->detach_process( nt->m_process_apc );

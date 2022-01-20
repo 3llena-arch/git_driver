@@ -421,8 +421,8 @@ struct ui_helper_t {
       int32_t sy = src_y < dst_y ? 1 : -1;
 
       // errors
-      int32_t ex = dx > dy ? dx : -dy;
-      int32_t ey = sx > sy ? sx : -sy;
+      int32_t ex = ( dx > dy ? dx : -dy ) / 2;
+      int32_t ey = ( sx > sy ? sx : -sy ) / 2;
 
       for (
          ;;

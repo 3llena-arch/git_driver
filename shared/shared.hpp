@@ -20,7 +20,7 @@ using uint8_t = unsigned char;
 using int64_t = long long;
 using int32_t = int;
 using int16_t = short;
-using in8_t = char;
+using int8_t = char;
 
 // strings
 using wstring_t = wchar_t*;

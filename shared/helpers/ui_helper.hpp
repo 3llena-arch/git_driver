@@ -412,30 +412,34 @@ struct ui_helper_t {
       if ( !m_gdi_ctx )
          return os->status_error;
 
-      auto abs = [ ]( int i ) {
-         return i < 0 ? -i : i;
-      };
+      // abs delta
+      int32_t dx = ( dx = ( dst_x - src_x ) ) < 0 ? -dx : dx;
+      int32_t dy = ( dy = ( dst_y - src_y ) ) < 0 ? -dy : dy;
 
+      // direction
+      int32_t sx = src_x < dst_x ? 1 : -1;
+      int32_t sy = src_y < dst_y ? 1 : -1;
 
-
-      int dx = abs(dst_x - src_x);
-      int sx = src_x < dst_x ? 1 : -1;
-
-      int dy = abs(dst_y - src_y);
-      int sy = src_y < dst_y ? 1 : -1;
-
-      int err = (dx > dy ? dx : -dy) / 2, e2;
+      // errors
+      int32_t ex = dx > dy ? dx : -dy;
+      int32_t ey = sx > sy ? sx : -sy;
 
       for (
          ;;
       ) {
+         // draw pixel
          gdi_set_pixel( m_gdi_ctx, src_x, src_y, color );
-         if (src_x == dst_x && src_y == dst_y) break;
 
-         e2 = err;
+         // check pos
+         if ( src_x == dst_x && src_y == dst_y )
+            break;
 
-         if (e2 > -dx) { err -= dy; src_x += sx; }
-         if (e2 < dy) { err += dx; src_y += sy; }
+         // set error
+         ey = ex;
+
+         // walk points
+         if ( ey > -dx ) ex -= dy, src_x += sx;
+         if ( ey < dy ) ex += dx, src_y += sy;
       }
 
       return os->status_okay;

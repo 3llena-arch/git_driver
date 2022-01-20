@@ -9,7 +9,6 @@
 // c includes
 #include <cstdarg>
 #include <cstring>
-#include <cmath>
 
 // numbers
 using uint64_t = unsigned long long;

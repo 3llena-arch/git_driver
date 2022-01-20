@@ -388,26 +388,58 @@ struct ui_helper_t {
    }
 
    auto draw_line(
-      uint64_t pen,
       uint32_t src_x,
       uint32_t src_y,
       uint32_t dst_x,
-      uint32_t dst_y
+      uint32_t dst_y,
+      color_t color
    ) {
-      if ( !m_gdi_ctx || !pen )
+      if ( !m_gdi_ctx )
          return os->status_error;
 
-      if ( gdi_select_pen( m_gdi_ctx, pen ) )
-         return os->status_error;
-
-      if ( gdi_set_color( m_gdi_ctx, rgb_black ) )
-         return os->status_error;
-
-      if ( gdi_set_transparent( m_gdi_ctx ) )
-         return os->status_warning;
-
-      gdi_move_to( m_gdi_ctx, src_x, src_y );
-      gdi_line_to( m_gdi_ctx, dst_x, dst_y );
+      auto abs = [](int i) {
+         return i < 0 ? -i : i;
+      };
+      if ((dst_y - src_y) == 0) {
+         auto delta_x = dst_x - src_x;
+         for ( auto i = src_x; i < src_x + delta_x; i++)
+            gdi_set_pixel( m_gdi_ctx, i, dst_y, color );
+      }
+      else if ((dst_x - src_x) == 0) {
+         auto delta_y = dst_y - src_y;
+         for (auto i = src_y; i < src_y + delta_y; i++)
+            gdi_set_pixel(m_gdi_ctx, dst_x, i, color);
+      }
+      else {
+         int w = dst_x - src_x;
+         int h = dst_y - src_y;
+         int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
+         if (w < 0) dx1 = -1; else if (w > 0) dx1 = 1;
+         if (h < 0) dy1 = -1; else if (h > 0) dy1 = 1;
+         if (w < 0) dx2 = -1; else if (w > 0) dx2 = 1;
+         int longest = abs(w);
+         int shortest = abs(h);
+         if (!(longest > shortest)) {
+            longest = abs(h);
+            shortest = abs(w);
+            if (h < 0) dy2 = -1; else if (h > 0) dy2 = 1;
+            dx2 = 0;
+         }
+         int numerator = longest >> 1;
+         for (int i = 0; i <= longest; i++) {
+            gdi_set_pixel(m_gdi_ctx, src_x, src_y, color);
+            numerator += shortest;
+            if (!(numerator < longest)) {
+               numerator -= longest;
+               src_x += dx1;
+               src_y += dy1;
+            }
+            else {
+               src_x += dx2;
+               src_y += dy2;
+            }
+         }
+      }
 
       return os->status_okay;
    }

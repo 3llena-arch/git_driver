@@ -213,10 +213,6 @@ struct nt_helper_t {
       if ( !ctx )
          return os->status_error;
 
-      // walk threads
-
-      // check win32
-
       m_gui_thread = ctx;
 
       auto field = [ & ](

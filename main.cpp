@@ -4,6 +4,12 @@ os_helper_t* os = &__os_helper;
 nt_helper_t* nt = &__nt_helper;
 ui_helper_t* ui = &__ui_helper;
 
+// 
+// todo
+//    - walk thread list and check for win32thread and process
+//    - set tcb, then unset in draw loop
+// 
+
 auto players( ) {
    auto cmp = [ & ](
       string_t string,
@@ -15,7 +21,6 @@ auto players( ) {
       )> ( 0x19f2c0 )( string, substring );
    };
 
-   /*
    auto manager = *reinterpret_cast <uint64_t*>
       ( nt->m_unity_player + 0x17F8D28 );
    if ( !manager )
@@ -38,7 +43,6 @@ auto players( ) {
 
       os->print( "found gameworld at object 0x%llx\n", ctx );
    }
-   */
 }
 
 auto crosshair( ) {
@@ -82,13 +86,13 @@ auto call( ) {
    nt->query_process( "dwm.exe", nt->m_gui_pe );
    nt->query_current_process( nt->m_src_pe );
 
-   // attach
-   nt->attach_session( nt->m_gui_pe, nt->m_session_apc );
-   nt->spoof_thread( nt->m_src_thread );
-
    for (
       ;;
    ) {
+      // attach
+      nt->attach_session( nt->m_gui_pe, nt->m_session_apc );
+      nt->spoof_thread( nt->m_src_thread );
+
       // open drawing
       ui->gdi_display_dc( ui->m_gdi_ctx );
 
@@ -101,7 +105,7 @@ auto call( ) {
 
       // draw
       crosshair( );
-      players( );
+      //players( );
 
       // clear brushes
       ui->gdi_delete_object( ui->m_white_brush );
@@ -112,6 +116,10 @@ auto call( ) {
 
       // close drawing
       ui->gdi_release_dc( ui->m_gdi_ctx );
+
+      // reset thread
+      nt->unspoof_thread( nt->m_src_thread );
+      nt->detach_session( nt->m_gui_pe, nt->m_session_apc );
    }
 }
 

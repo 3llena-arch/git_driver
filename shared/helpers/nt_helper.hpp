@@ -13,6 +13,9 @@ struct nt_helper_t {
    uint64_t m_unity_player;
    uint64_t m_object_manager;
 
+   uint64_t m_w32_old;
+   uint64_t m_peb_old;
+
    uint64_t m_gui_pe;
    uint64_t m_src_pe;
    uint64_t m_dst_pe;
@@ -221,6 +224,16 @@ struct nt_helper_t {
 
       m_gui_thread = ctx;
 
+      auto read = [ & ](
+         uint64_t address,
+         uint64_t &value
+      ) {
+         auto src = reinterpret_cast <uint64_t*> 
+            ( thread + address );
+
+         value = *src;
+      };
+
       auto field = [ & ](
          uint64_t address
       ) {
@@ -233,10 +246,37 @@ struct nt_helper_t {
          *src = *dst;
       };
 
+      // old
+      read( 0x1c8, m_w32_old );
+      read( 0x220, m_peb_old );
+
       // tcb
       field( 0x1c8 );
       field( 0x220 );
 
+      return os->status_okay;
+   }
+
+   auto unspoof_thread(
+      uint64_t thread
+   ) {
+      if ( !m_ctx || !m_gui_pe )
+         return os->status_error;
+
+      auto write = [ & ](
+         uint64_t address,
+         uint64_t value
+      ) {
+         auto src = reinterpret_cast <uint64_t*> 
+            ( thread + address );
+
+         *src = value;
+      };
+
+      // set old
+      write( 0x1c8, m_w32_old );
+      write( 0x220, m_peb_old );
+      
       return os->status_okay;
    }
 
@@ -290,6 +330,32 @@ struct nt_helper_t {
          apc_stub_t* state
       )> ( 0xe9e00 )( session, &apc );
 
+      return os->status_okay;
+   }
+
+   auto detach_session(
+      uint64_t process,
+      apc_stub_t& apc,
+      uint64_t session = 0,
+      uint32_t id = 0
+   ) {
+      if ( !m_ctx )
+         return os->status_error;
+
+      id = call_fn <uint64_t( __fastcall* )(
+         uint64_t process
+      )> ( 0x3a270 )( process );
+
+      session = call_fn <uint64_t( __fastcall* )(
+         uint32_t id
+      )> ( 0x23f0 )( id );
+
+      call_fn <uint64_t( __fastcall* )( 
+         uint64_t session,
+         apc_stub_t* state
+      )> ( 0xe9d60 )( session, &apc );
+
+      apc = { 0 };
       return os->status_okay;
    }
 

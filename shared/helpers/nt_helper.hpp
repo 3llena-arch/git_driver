@@ -147,14 +147,8 @@ struct nt_helper_t {
          wstring_t file = *reinterpret_cast <wstring_t*>
             ( ctx + 0x60 );
 
-         os->print( "found %wS\n", file );
-
          if ( !cmp( file, name ) )
             continue;
-
-         os->print( "wait what how did we find the mod?!\n" );
-         os->print( "base: 0x%llx\n", *reinterpret_cast <uint64_t*>
-            (ctx + 0x30));
 
          image = *reinterpret_cast <uint64_t*> 
             ( ctx + 0x30 );

@@ -74,13 +74,13 @@ auto call( ) {
    nt->unlink_thread( );
 
    // wait for game
-   nt->query_process( "EscapeFromTark", nt->m_dst_pe );
-   nt->attach_process( nt->m_dst_pe, nt->m_process_apc );
+   //nt->query_process( "EscapeFromTark", nt->m_dst_pe );
+   //nt->attach_process( nt->m_dst_pe, nt->m_process_apc );
 
    // grab images
-   nt->query_image( L"UnityPlayer.dll", nt->m_unity_player );
-   nt->detach_process( nt->m_process_apc );
-   os->print("UnityPlayer.dll at %llx\n", nt->m_unity_player);
+   //nt->query_image( L"UnityPlayer.dll", nt->m_unity_player );
+   //nt->detach_process( nt->m_process_apc );
+   //os->print("UnityPlayer.dll at %llx\n", nt->m_unity_player);
 
    // wait for gui
    nt->query_process( "dwm.exe", nt->m_gui_pe );

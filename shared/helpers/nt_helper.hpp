@@ -13,9 +13,6 @@ struct nt_helper_t {
    uint64_t m_unity_player;
    uint64_t m_object_manager;
 
-   uint64_t m_w32_old;
-   uint64_t m_peb_old;
-
    uint64_t m_gui_pe;
    uint64_t m_src_pe;
    uint64_t m_dst_pe;
@@ -169,7 +166,7 @@ struct nt_helper_t {
       if ( !m_ctx || !name )
          return os->status_error;
 
-      while ( idle < 0x7ffffffff )
+      while ( idle < 0x7fffff )
          idle++;
 
       auto cmp = [ & ](
@@ -216,17 +213,11 @@ struct nt_helper_t {
       if ( !ctx )
          return os->status_error;
 
+      // walk threads
+
+      // check win32
+
       m_gui_thread = ctx;
-
-      auto read = [ & ](
-         uint64_t address,
-         uint64_t &value
-      ) {
-         auto src = reinterpret_cast <uint64_t*> 
-            ( thread + address );
-
-         value = *src;
-      };
 
       auto field = [ & ](
          uint64_t address
@@ -239,10 +230,10 @@ struct nt_helper_t {
 
          *src = *dst;
       };
-
-      // old
-      read( 0x1c8, m_w32_old );
-      read( 0x220, m_peb_old );
+      
+      // cid
+      field( 0x648 );
+      field( 0x650 );
 
       // tcb
       field( 0x1c8 );
@@ -267,9 +258,13 @@ struct nt_helper_t {
          *src = value;
       };
 
-      // set old
-      write( 0x1c8, m_w32_old );
-      write( 0x220, m_peb_old );
+      // cid
+      write( 0x648, 0);
+      write( 0x650, 0);
+
+      // tcb
+      write( 0x1c8, 0 );
+      write( 0x220, m_ctx );
       
       return os->status_okay;
    }

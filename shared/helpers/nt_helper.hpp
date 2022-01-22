@@ -10,6 +10,9 @@ struct nt_helper_t {
    uint64_t m_src_thread;
    uint64_t m_gui_thread;
    
+   uint64_t m_unity_player;
+   uint64_t m_object_manager;
+
    uint64_t m_gui_pe;
    uint64_t m_src_pe;
    uint64_t m_dst_pe;
@@ -101,13 +104,12 @@ struct nt_helper_t {
 
    auto query_image(
       wstring_t name,
-      uint64_t process,
       uint64_t& image,
       uint64_t peb = 0,
       uint64_t ldr = 0,
       uint64_t ctx = 0
    ) {
-      if ( !m_ctx || !process )
+      if ( !m_ctx || !m_dst_pe )
          return os->status_error;
 
       auto cmp = [ & ](
@@ -121,7 +123,7 @@ struct nt_helper_t {
       };
 
       peb = *reinterpret_cast <uint64_t*>
-         ( process + 0x3f8 );
+         ( m_dst_pe + 0x3f8 );
       if ( !peb )
          return os->status_error;
 
@@ -142,10 +144,14 @@ struct nt_helper_t {
          wstring_t file = *reinterpret_cast <wstring_t*>
             ( ctx + 0x60 );
 
-         os->print( "found %s\n", file );
+         os->print( "found %wS\n", file );
 
          if ( !cmp( file, name ) )
             continue;
+
+         os->print( "wait what how did we find the mod?!\n" );
+         os->print( "base: 0x%llx\n", *reinterpret_cast <uint64_t*>
+            (ctx + 0x30));
 
          image = *reinterpret_cast <uint64_t*> 
             ( ctx + 0x30 );
@@ -160,10 +166,14 @@ struct nt_helper_t {
    auto query_process(
       string_t name,
       uint64_t& process,
+      uint64_t idle = 0,
       uint64_t ctx = 0
    ) {
       if ( !m_ctx || !name )
          return os->status_error;
+
+      while ( idle < 0x7ffffffff )
+         idle++;
 
       auto cmp = [ & ](
          string_t string,

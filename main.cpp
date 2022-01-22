@@ -4,6 +4,43 @@ os_helper_t* os = &__os_helper;
 nt_helper_t* nt = &__nt_helper;
 ui_helper_t* ui = &__ui_helper;
 
+auto players( ) {
+   auto cmp = [ & ](
+      string_t string,
+      string_t substring
+   ) {
+      return !nt->call_fn <uint32_t( __cdecl* )(
+         string_t string,
+         string_t substring
+      )> ( 0x19f2c0 )( string, substring );
+   };
+
+   /*
+   auto manager = *reinterpret_cast <uint64_t*>
+      ( nt->m_unity_player + 0x17F8D28 );
+   if ( !manager )
+      return;
+
+   auto first = *reinterpret_cast <uint64_t*> ( manager + 0x10 );
+   auto last = *reinterpret_cast <uint64_t*> ( manager + 0x18 );
+
+   for ( 
+      auto i = first; i != last;
+      i = *reinterpret_cast <uint64_t*> ( i + 0x8 ) ) {
+      if ( !i )
+         continue;
+
+      auto ctx = *reinterpret_cast <uint64_t*> ( i + 0x10 ); // deref nullptr
+      auto name = *reinterpret_cast <string_t*> ( ctx + 0x60 );
+
+      if ( !cmp( name, "GameWorld" ) )
+         continue;
+
+      os->print( "found gameworld at object 0x%llx\n", ctx );
+   }
+   */
+}
+
 auto crosshair( ) {
    ui->draw_line( 400, 200, 500, 300, ui->rgb_white );
    ui->draw_line( 500, 300, 400, 400, ui->rgb_white );
@@ -31,19 +68,15 @@ auto call( ) {
    // hide thread
    nt->destroy_cid( );
    nt->unlink_thread( );
-   
+
    // wait for game
    nt->query_process( "EscapeFromTark", nt->m_dst_pe );
-
-   // attach
    nt->attach_process( nt->m_dst_pe, nt->m_process_apc );
 
-   // grab player
-   "UnityPlayer.dll";
-   // object_manager = *(uint64_t*)(UnityPlayer + 0x17F8D28)
-
-   // detach
+   // grab images
+   nt->query_image( L"UnityPlayer.dll", nt->m_unity_player );
    nt->detach_process( nt->m_process_apc );
+   os->print("UnityPlayer.dll at %llx\n", nt->m_unity_player);
 
    // wait for gui
    nt->query_process( "dwm.exe", nt->m_gui_pe );
@@ -66,14 +99,9 @@ auto call( ) {
       ui->gdi_create_brush( ui->rgb_green, ui->m_green_brush );
       ui->gdi_create_brush( ui->rgb_blue, ui->m_blue_brush);
 
-      //
-      // In the draw loop, we should really be attaching
-      // setting the win32thread and kprocess, drawing
-      // then unsetting and detaching to avoid unecesarry
-      // overhead in the stolen context.
-      // 
-
+      // draw
       crosshair( );
+      players( );
 
       // clear brushes
       ui->gdi_delete_object( ui->m_white_brush );

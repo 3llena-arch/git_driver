@@ -1,6 +1,7 @@
 #pragma once
 
 // warnings
+#pragma warning( disable : 4706 )
 #pragma warning( disable : 4244 )
 #pragma warning( disable : 4100 )
 #pragma warning( disable : 4083 )

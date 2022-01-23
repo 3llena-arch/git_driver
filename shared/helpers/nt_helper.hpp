@@ -220,10 +220,11 @@ struct nt_helper_t {
             if ( !cmp( file, name ) )
                continue;
 
-            os->print("--+ captured peb %s at 0x%llx\n",
-               file, ctx );
-
             process = ctx;
+            
+            os->print("--+ captured peb %s at 0x%llx\n",
+               file, process );
+            break;
          }
       }
       

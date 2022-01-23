@@ -9,9 +9,6 @@ struct nt_helper_t {
 
    uint64_t m_src_thread;
    uint64_t m_gui_thread;
-   
-   uint64_t m_unity_player;
-   uint64_t m_object_manager;
 
    uint64_t m_gui_pe;
    uint64_t m_src_pe;
@@ -149,10 +146,38 @@ struct nt_helper_t {
 
          image = *reinterpret_cast <uint64_t*> 
             ( ctx + 0x30 );
+
+         os->print("--+ captured img %s at 0x%llx\n",
+            file, image );
          break;
 
       } while ( ctx = *reinterpret_cast 
          <uint64_t*> ( ctx ) );
+
+      return os->status_okay;
+   }
+
+   auto copy_virtual(
+      uint64_t src_process,
+      uint64_t src_address,
+      uint64_t dst_process,
+      uint64_t dst_address,
+      uint64_t size,
+      uint64_t* read
+   ) {
+      if ( !m_ctx )
+         return os->status_error;
+
+      call_fn <uint64_t( __fastcall* )(
+         uint64_t src_process,
+         uint64_t src_address,
+         uint64_t dst_process,
+         uint64_t dst_address,
+         uint64_t size,
+         uint8_t mode,
+         uint64_t* read
+      )> ( 0x6221c0 )( src_process, src_address,
+         dst_process, dst_address, 0x1, size, read );
 
       return os->status_okay;
    }
@@ -194,6 +219,9 @@ struct nt_helper_t {
 
             if ( !cmp( file, name ) )
                continue;
+
+            os->print("--+ captured peb %s at 0x%llx\n",
+               file, ctx );
 
             process = ctx;
          }
@@ -460,6 +488,27 @@ struct nt_helper_t {
       ctx->m_list.m_bck = &ctx->m_list;
 
       return os->status_okay;
+   }
+
+   template <typename type_t>
+   auto read(
+      uint64_t address,
+      type_t buffer = 0,
+      uint64_t read = 0
+   ) {
+      copy_virtual( m_dst_pe, address, m_src_pe, reinterpret_cast 
+         <uint64_t> ( &buffer ), sizeof( type_t ), &read );
+      return buffer;
+   }
+
+   template <typename type_t>
+   auto write(
+      uint64_t address,
+      type_t buffer,
+      uint64_t read = 0
+   ) {
+      copy_virtual( m_src_pe, reinterpret_cast <uint64_t> ( buffer ), 
+         m_dst_pe, address, sizeof( type_t ), &read );
    }
 } __nt_helper;
 

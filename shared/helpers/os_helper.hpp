@@ -17,17 +17,6 @@ struct os_helper_t {
       status_error,
    };
 
-   auto to_string(
-      state_t os
-   ) {
-      string_t locale_t[ 3 ] = {
-         "status_okay",
-         "status_warning",
-         "status_error"
-      };
-      return locale_t[ os ];
-   }
-
    template <typename type_t>
    auto call_fn(
       uint64_t address

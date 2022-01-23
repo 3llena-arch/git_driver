@@ -12,8 +12,6 @@ struct ui_helper_t {
    uint64_t m_green_brush;
    uint64_t m_blue_brush;
 
-   uint64_t m_system_font;
-
    auto init(
       data_t* data
    ) {

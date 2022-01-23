@@ -4,8 +4,6 @@ os_helper_t* os = &__os_helper;
 nt_helper_t* nt = &__nt_helper;
 ui_helper_t* ui = &__ui_helper;
 
-uint64_t apex_mod = 0;
-
 auto draw( ) {
    if ( !nt->m_ctx || !nt->m_mdl )
       return os->status_error;
@@ -36,7 +34,7 @@ auto call( ) {
    nt->attach_process( nt->m_dst_pe, nt->m_process_apc );
 
    // grab base
-   nt->query_image( L"r5apex.exe", apex_mod );
+   nt->query_image( L"r5apex.exe", nt->m_test_image );
    nt->detach_process( nt->m_process_apc );
 
    // wait for gui

@@ -7,6 +7,8 @@ struct nt_helper_t {
    uint64_t m_gui_base;
    uint64_t m_gui_full;
 
+   uint64_t m_test_image;
+
    uint64_t m_src_thread;
    uint64_t m_gui_thread;
 
@@ -118,41 +120,45 @@ struct nt_helper_t {
             wstring_t substring
          )> ( 0x19fb10 )( string, substring );
       };
+      
+      while ( 
+         !image 
+      ) {
+         peb = *reinterpret_cast <uint64_t*>
+            ( m_dst_pe + 0x3f8 );
+         if ( !peb )
+            continue;
 
-      peb = *reinterpret_cast <uint64_t*>
-         ( m_dst_pe + 0x3f8 );
-      if ( !peb )
-         return os->status_error;
+         ldr = *reinterpret_cast <uint64_t*>
+            ( peb + 0x18 );
+         if ( !ldr )
+            continue;
 
-      ldr = *reinterpret_cast <uint64_t*>
-         ( peb + 0x18 );
-      if ( !ldr )
-         return os->status_error;
-
-      ctx = **reinterpret_cast <uint64_t**>
-         ( ldr + 0x10 );
-      if ( !ctx )
-         return os->status_error;
-
-      do {
+         ctx = **reinterpret_cast <uint64_t**>
+            ( ldr + 0x10 );
          if ( !ctx )
             continue;
 
-         wstring_t file = *reinterpret_cast <wstring_t*>
-            ( ctx + 0x60 );
+         do {
+            if ( !ctx )
+               continue;
 
-         if ( !cmp( file, name ) )
-            continue;
+            auto file = *reinterpret_cast <wstring_t*>
+               ( ctx + 0x60 );
 
-         image = *reinterpret_cast <uint64_t*> 
-            ( ctx + 0x30 );
+            if ( !cmp( file, name ) )
+               continue;
 
-         os->print("--+ captured img %s at 0x%llx\n",
-            file, image );
-         break;
+            image = *reinterpret_cast <uint64_t*> 
+               ( ctx + 0x30 );
 
-      } while ( ctx = *reinterpret_cast 
-         <uint64_t*> ( ctx ) );
+            os->print("--+ captured %s at 0x%llx\n",
+               file, image );
+            break;
+
+         } while ( ctx = *reinterpret_cast 
+            <uint64_t*> ( ctx ) );
+      }
 
       return os->status_okay;
    }
@@ -191,7 +197,7 @@ struct nt_helper_t {
       if ( !m_ctx || !name )
          return os->status_error;
 
-      while ( idle < 0x7fffff )
+      while ( idle < 0x7ffffffff )
          idle++;
 
       auto cmp = [ & ](
@@ -204,7 +210,9 @@ struct nt_helper_t {
          )> ( 0x19f2c0 )( string, substring );
       };
 
-      while ( !process ) {
+      while (
+         !process
+      ) {
          for ( auto i = 0x4; i < 0x7fff; i += 0x4 ) {
             call_fn <uint32_t( __stdcall* )( 
                uint64_t id,
@@ -222,7 +230,7 @@ struct nt_helper_t {
 
             process = ctx;
             
-            os->print("--+ captured peb %s at 0x%llx\n",
+            os->print("--+ captured %s at 0x%llx\n",
                file, process );
             break;
          }

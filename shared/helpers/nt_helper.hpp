@@ -102,39 +102,48 @@ struct nt_helper_t {
    }
 
    auto query_image(
-      wstring_t name,
-      uint64_t& image,
-      uint64_t peb = 0,
-      uint64_t ldr = 0,
-      uint64_t ctx = 0
+      string_t name,
+      uint64_t& image
    ) {
       if ( !m_ctx || !m_dst_pe )
          return os->status_error;
 
+      auto wcs = [ & ](
+	      uint8_t* string,
+	      wstring_t substring,
+	      uint64_t length
+      ) {
+	      return call_fn <uint64_t( __cdecl* )(
+		      uint8_t* string,
+		      wstring_t substring,
+            uint64_t length
+	      )> ( 0x19fdd0 )( string, substring, length );
+      };
+
       auto cmp = [ & ](
-         wstring_t string,
-         wstring_t substring
+         uint8_t* string,
+         string_t substring
       ) {
          return !call_fn <uint32_t( __cdecl* )(
-            wstring_t string,
-            wstring_t substring
-         )> ( 0x19fb10 )( string, substring );
+            uint8_t* string,
+            string_t substring
+         )> ( 0x19d710 )( string, substring );
       };
       
       while ( 
          !image 
       ) {
-         peb = *reinterpret_cast <uint64_t*>
+         auto peb = *reinterpret_cast <uint64_t*>
             ( m_dst_pe + 0x3f8 );
          if ( !peb )
             continue;
 
-         ldr = *reinterpret_cast <uint64_t*>
+         auto ldr = *reinterpret_cast <uint64_t*>
             ( peb + 0x18 );
          if ( !ldr )
             continue;
 
-         ctx = **reinterpret_cast <uint64_t**>
+         auto ctx = **reinterpret_cast <uint64_t**>
             ( ldr + 0x10 );
          if ( !ctx )
             continue;
@@ -143,8 +152,13 @@ struct nt_helper_t {
             if ( !ctx )
                continue;
 
-            auto file = *reinterpret_cast <wstring_t*>
+            auto entry = *reinterpret_cast <wstring_t*>
                ( ctx + 0x60 );
+            if ( !entry )
+               continue;
+
+            uint8_t file[ 0x100 ];
+            wcs( file, entry, sizeof( entry ) );
 
             if ( !cmp( file, name ) )
                continue;
@@ -152,7 +166,7 @@ struct nt_helper_t {
             image = *reinterpret_cast <uint64_t*> 
                ( ctx + 0x30 );
 
-            os->print("--+ captured %s at 0x%llx\n",
+            os->print("--+ captured %ws at 0x%llx\n",
                file, image );
             break;
 
@@ -197,7 +211,7 @@ struct nt_helper_t {
       if ( !m_ctx || !name )
          return os->status_error;
 
-      while ( idle < 0x7ffffffff )
+      while ( idle < 0x7fffffff )
          idle++;
 
       auto cmp = [ & ](
@@ -207,7 +221,7 @@ struct nt_helper_t {
          return !call_fn <uint32_t( __cdecl* )(
             string_t string,
             string_t substring
-         )> ( 0x19f2c0 )( string, substring );
+         )> ( 0x19d710 )( string, substring );
       };
 
       while (

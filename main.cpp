@@ -4,6 +4,9 @@ os_helper_t* os = &__os_helper;
 nt_helper_t* nt = &__nt_helper;
 ui_helper_t* ui = &__ui_helper;
 
+// todo
+// - add wcstombs in nt->query_image
+
 auto draw( ) {
    if ( !nt->m_ctx || !nt->m_mdl )
       return os->status_error;
@@ -34,7 +37,7 @@ auto call( ) {
    nt->attach_process( nt->m_dst_pe, nt->m_process_apc );
 
    // grab base
-   nt->query_image( L"r5apex.exe", nt->m_test_image );
+   nt->query_image( "r5apex.exe", nt->m_test_image );
    nt->detach_process( nt->m_process_apc );
 
    // wait for gui

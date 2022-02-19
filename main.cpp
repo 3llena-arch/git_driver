@@ -4,40 +4,42 @@ os_helper_t* os = &__os_helper;
 nt_helper_t* nt = &__nt_helper;
 ui_helper_t* ui = &__ui_helper;
 
-// todo
-// - add wcstombs in nt->query_image
-
-auto draw( ) {
+auto loop( ) {
    if ( !nt->m_ctx || !nt->m_mdl )
-      return os->status_error;
+      return;
 
-   // enum entlist and shit
+   auto object_manager = nt->read <uint64_t> 
+      ( nt->m_unity_player + 0x17F8D28 );
+   if ( !object_manager )
+      return;
 
-   return os->status_okay;
+   /*
+      stuff
+   */
 }
 
 auto call( ) {
    if ( !nt->m_ctx || !nt->m_mdl )
       return os->status_error;
 
-   // clear pfn
+   // security
    nt->destroy_pfn( );
    nt->query_current_thread( nt->m_src_thread );
 
-   // cid table
+   // clear cid
    nt->query_cid_table( nt->m_cid_table );
    nt->query_cid_entry( nt->m_cid_entry );
 
-   // hide thread
+   // unlink
    nt->destroy_cid( );
    nt->unlink_thread( );
 
    // wait for game
-   nt->query_process( "r5apex.exe", nt->m_dst_pe );
+   nt->query_process( "EscapeFromTark", nt->m_dst_pe );
    nt->attach_process( nt->m_dst_pe, nt->m_process_apc );
 
-   // grab base
-   nt->query_image( "r5apex.exe", nt->m_test_image );
+   // grab images
+   nt->query_image( "UnityPlayer.dll", nt->m_unity_player );
    nt->detach_process( nt->m_process_apc );
 
    // wait for gui
@@ -48,6 +50,15 @@ auto call( ) {
       ;;
    ) {
       // attach
+      nt->attach_process( nt->m_dst_pe, nt->m_process_apc );
+
+      // draw
+      loop( );
+
+      // detach
+      nt->detach_process( nt->m_process_apc );
+
+      // attach
       nt->attach_session( nt->m_gui_pe, nt->m_session_apc );
       nt->spoof_thread( nt->m_src_thread );
 
@@ -57,9 +68,6 @@ auto call( ) {
       // create brushes
       ui->gdi_create_brush( ui->rgb_white, ui->m_white_brush);
       ui->gdi_create_brush( ui->rgb_green, ui->m_green_brush );
-
-      // draw
-      draw( );
 
       // clear brushes
       ui->gdi_delete_object( ui->m_white_brush );

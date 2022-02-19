@@ -65,8 +65,7 @@
     <Link>
       <EntryPointSymbol>main</EntryPointSymbol>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <RandomizedBaseAddress>
-      </RandomizedBaseAddress>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <Profile>false</Profile>
     </Link>
   </ItemDefinitionGroup>

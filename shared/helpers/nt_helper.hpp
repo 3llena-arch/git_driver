@@ -7,7 +7,8 @@ struct nt_helper_t {
    uint64_t m_gui_base;
    uint64_t m_gui_full;
 
-   uint64_t m_test_image;
+   uint64_t m_unity_player;
+   uint64_t m_object_manager;
 
    uint64_t m_src_thread;
    uint64_t m_gui_thread;
@@ -23,12 +24,16 @@ struct nt_helper_t {
       uint8_t m_pad1[ 0x30 ];
    };
 
+   struct list_stub_t {
+      list_stub_t* m_fwd;
+      list_stub_t* m_bck;
+   };
+
    struct thread_stub_t {
-      uint8_t m_pad1[ 0x6b8 ];
-      struct list_t {
-         list_t* m_fwd;
-         list_t* m_bck;
-      } m_list;
+      uint8_t m_pad1[ 0x2f8 ];
+      list_stub_t m_list1;
+      uint8_t m_pad2[ 0x3b0 ];
+      list_stub_t m_list2;
    };
 
    apc_stub_t m_session_apc;
@@ -108,24 +113,20 @@ struct nt_helper_t {
       if ( !m_ctx || !m_dst_pe )
          return os->status_error;
 
-      auto wcs = [ & ](
-	      uint8_t* string,
-	      wstring_t substring,
-	      uint64_t length
+      auto len = [ & ](
+         wstring_t string
       ) {
-	      return call_fn <uint64_t( __cdecl* )(
-		      uint8_t* string,
-		      wstring_t substring,
-            uint64_t length
-	      )> ( 0x19fdd0 )( string, substring, length );
+         return call_fn <uint64_t( __cdecl* )(
+            wstring_t string
+         )> ( 0x19fba0 )( string );
       };
 
       auto cmp = [ & ](
-         uint8_t* string,
+         string_t string,
          string_t substring
       ) {
          return !call_fn <uint32_t( __cdecl* )(
-            uint8_t* string,
+            string_t string,
             string_t substring
          )> ( 0x19d710 )( string, substring );
       };
@@ -157,8 +158,13 @@ struct nt_helper_t {
             if ( !entry )
                continue;
 
-            uint8_t file[ 0x100 ];
-            wcs( file, entry, sizeof( entry ) );
+            char file[ 0x100 ];
+
+            if ( !std::memset( file, 0, sizeof( file ) ) )
+               continue;
+
+            for ( auto i = 0; entry[ i ] != '\0'; i++ )
+               file[ i ] = entry[ i ];
 
             if ( !cmp( file, name ) )
                continue;
@@ -166,7 +172,7 @@ struct nt_helper_t {
             image = *reinterpret_cast <uint64_t*> 
                ( ctx + 0x30 );
 
-            os->print("--+ captured %ws at 0x%llx\n",
+            os->print("--+ captured %s at 0x%llx\n",
                file, image );
             break;
 
@@ -183,12 +189,12 @@ struct nt_helper_t {
       uint64_t dst_process,
       uint64_t dst_address,
       uint64_t size,
-      uint64_t* read
+      uint64_t read = 0
    ) {
       if ( !m_ctx )
          return os->status_error;
 
-      call_fn <uint64_t( __fastcall* )(
+      call_fn <uint32_t( __fastcall* )(
          uint64_t src_process,
          uint64_t src_address,
          uint64_t dst_process,
@@ -197,7 +203,7 @@ struct nt_helper_t {
          uint8_t mode,
          uint64_t* read
       )> ( 0x6221c0 )( src_process, src_address,
-         dst_process, dst_address, 0x1, size, read );
+         dst_process, dst_address, 0, size, &read );
 
       return os->status_okay;
    }
@@ -484,54 +490,55 @@ struct nt_helper_t {
       if ( !misc )
          return os->status_error;
 
-      // misc flags
       misc &= (0ul << 0x4);
       misc &= (0ul << 0xe);
       misc &= (0ul << 0xa);
+      
+      field( 0x30 );
+      field( 0x38 );
+      field( 0x58 );
 
-      // start address
       field( 0x6a0 );
       field( 0x620 );
-
-      // client id
       field( 0x648 );
       field( 0x650 );
+      field( 0x724 );
 
       auto ctx = reinterpret_cast <thread_stub_t*>
          ( m_src_thread );
       if ( !ctx )
          return os->status_error;
 
-      // skip entry
-      ctx->m_list.m_bck->m_fwd = ctx->m_list.m_fwd;
-      ctx->m_list.m_fwd->m_bck = ctx->m_list.m_bck;
+      ctx->m_list1.m_bck->m_fwd = ctx->m_list1.m_fwd;
+      ctx->m_list1.m_fwd->m_bck = ctx->m_list1.m_bck;
+      ctx->m_list2.m_bck->m_fwd = ctx->m_list2.m_fwd;
+      ctx->m_list2.m_fwd->m_bck = ctx->m_list2.m_bck;
 
-      // safety
-      ctx->m_list.m_fwd = &ctx->m_list;
-      ctx->m_list.m_bck = &ctx->m_list;
+      ctx->m_list1.m_fwd = &ctx->m_list1;
+      ctx->m_list1.m_bck = &ctx->m_list1;
+      ctx->m_list2.m_fwd = &ctx->m_list2;
+      ctx->m_list2.m_bck = &ctx->m_list2;
 
       return os->status_okay;
    }
 
    template <typename type_t>
    auto read(
-      uint64_t address,
-      type_t buffer = 0,
-      uint64_t read = 0
+      uint64_t address
    ) {
+      type_t buffer{};
       copy_virtual( m_dst_pe, address, m_src_pe, reinterpret_cast 
-         <uint64_t> ( &buffer ), sizeof( type_t ), &read );
+         <uint64_t> ( &buffer ), sizeof( type_t ) );
       return buffer;
    }
 
    template <typename type_t>
    auto write(
       uint64_t address,
-      type_t buffer,
-      uint64_t read = 0
+      type_t buffer
    ) {
       copy_virtual( m_src_pe, reinterpret_cast <uint64_t> ( buffer ), 
-         m_dst_pe, address, sizeof( type_t ), &read );
+         m_dst_pe, address, sizeof( type_t ) );
    }
 } __nt_helper;
 

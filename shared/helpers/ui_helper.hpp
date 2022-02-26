@@ -437,9 +437,7 @@ struct ui_helper_t {
       int32_t ex = ( dx > dy ? dx : -dy ) / 2;
       int32_t ey = ( sx > sy ? sx : -sy ) / 2;
 
-      for (
-         ;;
-      ) {
+      for ( ;; ) {
          // draw pixel
          gdi_set_pixel( m_gdi_ctx, src_x, src_y, color );
 

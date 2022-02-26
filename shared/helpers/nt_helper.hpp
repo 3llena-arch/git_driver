@@ -7,9 +7,6 @@ struct nt_helper_t {
    uint64_t m_gui_base;
    uint64_t m_gui_full;
 
-   uint64_t m_unity_player;
-   uint64_t m_object_manager;
-
    uint64_t m_src_thread;
    uint64_t m_gui_thread;
 
@@ -537,7 +534,7 @@ struct nt_helper_t {
       uint64_t address,
       type_t buffer
    ) {
-      copy_virtual( m_src_pe, reinterpret_cast <uint64_t> ( buffer ), 
+      copy_virtual( m_src_pe, reinterpret_cast <uint64_t> ( &buffer ), 
          m_dst_pe, address, sizeof( type_t ) );
    }
 } __nt_helper;

@@ -4,18 +4,13 @@ os_helper_t* os = &__os_helper;
 nt_helper_t* nt = &__nt_helper;
 ui_helper_t* ui = &__ui_helper;
 
+uint64_t arma_bin;
+
 auto loop( ) {
    if ( !nt->m_ctx || !nt->m_mdl )
       return;
 
-   auto object_manager = nt->read <uint64_t> 
-      ( nt->m_unity_player + 0x17F8D28 );
-   if ( !object_manager )
-      return;
-
-   /*
-      stuff
-   */
+   ui->draw_box( ui->m_white_brush, 200, 200, 300, 300 );
 }
 
 auto call( ) {
@@ -35,29 +30,18 @@ auto call( ) {
    nt->unlink_thread( );
 
    // wait for game
-   nt->query_process( "EscapeFromTark", nt->m_dst_pe );
+   nt->query_process( "arma3.exe", nt->m_dst_pe );
    nt->attach_process( nt->m_dst_pe, nt->m_process_apc );
 
    // grab images
-   nt->query_image( "UnityPlayer.dll", nt->m_unity_player );
+   nt->query_image( "arma3.exe", arma_bin );
    nt->detach_process( nt->m_process_apc );
 
    // wait for gui
    nt->query_process( "dwm.exe", nt->m_gui_pe );
    nt->query_current_process( nt->m_src_pe );
 
-   for (
-      ;;
-   ) {
-      // attach
-      nt->attach_process( nt->m_dst_pe, nt->m_process_apc );
-
-      // draw
-      loop( );
-
-      // detach
-      nt->detach_process( nt->m_process_apc );
-
+   for ( ;; ) {
       // attach
       nt->attach_session( nt->m_gui_pe, nt->m_session_apc );
       nt->spoof_thread( nt->m_src_thread );
@@ -68,6 +52,9 @@ auto call( ) {
       // create brushes
       ui->gdi_create_brush( ui->rgb_white, ui->m_white_brush);
       ui->gdi_create_brush( ui->rgb_green, ui->m_green_brush );
+
+      // hax
+      loop( );
 
       // clear brushes
       ui->gdi_delete_object( ui->m_white_brush );

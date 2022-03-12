@@ -98,7 +98,7 @@ struct ui_helper_t {
       if ( !m_gui_base || !ctx )
          return os->status_error;
 
-      call_fn < uint64_t( __fastcall* )(
+      call_fn <uint64_t( __fastcall* )(
          uint64_t ctx
       )> ( gui_base, 0x3a6c0 )( ctx );
 

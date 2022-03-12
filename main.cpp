@@ -30,11 +30,11 @@ auto call( ) {
    nt->unlink_thread( );
 
    // wait for game
-   nt->query_process( "arma3.exe", nt->m_dst_pe );
+   nt->query_process( "arma3_x64.exe", nt->m_dst_pe );
    nt->attach_process( nt->m_dst_pe, nt->m_process_apc );
 
    // grab images
-   nt->query_image( "arma3.exe", arma_bin );
+   nt->query_image( L"arma3_x64.exe", arma_bin );
    nt->detach_process( nt->m_process_apc );
 
    // wait for gui
@@ -50,7 +50,7 @@ auto call( ) {
       ui->gdi_display_dc( ui->m_gdi_ctx );
 
       // create brushes
-      ui->gdi_create_brush( ui->rgb_white, ui->m_white_brush);
+      ui->gdi_create_brush( ui->rgb_white, ui->m_white_brush );
       ui->gdi_create_brush( ui->rgb_green, ui->m_green_brush );
 
       // hax

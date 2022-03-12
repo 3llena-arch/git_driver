@@ -104,28 +104,20 @@ struct nt_helper_t {
    }
 
    auto query_image(
-      string_t name,
+      wstring_t name,
       uint64_t& image
    ) {
       if ( !m_ctx || !m_dst_pe )
          return os->status_error;
 
-      auto len = [ & ](
-         wstring_t string
-      ) {
-         return call_fn <uint64_t( __cdecl* )(
-            wstring_t string
-         )> ( 0x19fba0 )( string );
-      };
-
       auto cmp = [ & ](
-         string_t string,
-         string_t substring
+         wstring_t string,
+         wstring_t substring
       ) {
          return !call_fn <uint32_t( __cdecl* )(
-            string_t string,
-            string_t substring
-         )> ( 0x19d710 )( string, substring );
+            wstring_t string,
+            wstring_t substring
+         )> ( 0x19fb10 )( string, substring );
       };
       
       while ( 
@@ -150,26 +142,20 @@ struct nt_helper_t {
             if ( !ctx )
                continue;
 
-            auto entry = *reinterpret_cast <wstring_t*>
+            auto file = *reinterpret_cast <wstring_t*>
                ( ctx + 0x60 );
-            if ( !entry )
+            if ( !file )
                continue;
-
-            char file[ 0x100 ];
-
-            if ( !std::memset( file, 0, sizeof( file ) ) )
-               continue;
-
-            for ( auto i = 0; entry[ i ] != '\0'; i++ )
-               file[ i ] = entry[ i ];
 
             if ( !cmp( file, name ) )
                continue;
 
             image = *reinterpret_cast <uint64_t*> 
                ( ctx + 0x30 );
+            if ( !image )
+               continue;
 
-            os->print("--+ captured %s at 0x%llx\n",
+            os->print("--+ captured %ws at 0x%llx\n",
                file, image );
             break;
 
@@ -214,7 +200,7 @@ struct nt_helper_t {
       if ( !m_ctx || !name )
          return os->status_error;
 
-      while ( idle < 0x7fffffff )
+      while ( idle < 0x7fff )
          idle++;
 
       auto cmp = [ & ](

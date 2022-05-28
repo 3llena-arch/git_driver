@@ -454,14 +454,69 @@ struct kernel_t {
       return 0;
    }
 
-   [[ nodiscard ]]
+   //[[ nodiscard ]]
    const std::ptrdiff_t module_by_name(
       const std::ptrdiff_t process,
       const std::wstring_t module_name
    ) {
-      ( process, module_name ); 
+      constexpr std::uint32_t pe_peb{ 0x3f8 };
+      constexpr std::uint32_t pe_ldr{ 0x018 };
 
-      return 1;
+      auto peb{ *ptr< std::ptrdiff_t* >( process + pe_peb ) };
+      if ( !peb )
+         return 0;
+
+      auto ldr{ *ptr< std::ptrdiff_t* >( peb + pe_ldr ) };
+      if ( !ldr )
+         return 0;
+
+      struct entry_t {
+         entry_t* m_next;
+         entry_t* m_prev;
+      };
+
+      {
+         auto ctx{ ptr< entry_t* >( ldr + 0x10 ) };
+         if ( !ctx )
+            return 0;
+         unsigned long b = 0;
+         do {
+            b++;
+            msg( "--> entry %llx\n", ctx );
+            ctx = ctx->m_next;
+         } while ( ctx != ptr< entry_t* >( ldr + 0x10 ) );
+         msg("**** queried %lx\n\n", b);
+      }
+
+      {
+         auto ctx{ ptr< entry_t* >( ldr + 0x20 ) };
+         if ( !ctx )
+            return 0;
+         unsigned long b = 0;
+         do {
+            b++;
+            msg( "--> entry %llx\n", ctx );
+            ctx = ctx->m_next;
+         } while ( ctx != ptr< entry_t* >( ldr + 0x20 ) );
+         msg("**** queried %lx\n\n", b);
+      }
+
+      {
+         auto ctx{ ptr< entry_t* >( ldr + 0x30 ) };
+         if ( !ctx )
+            return 0;
+         unsigned long b = 0;
+         do {
+            b++;
+            msg( "--> entry %llx\n", ctx );
+            ctx = ctx->m_next;
+         } while ( ctx != ptr< entry_t* >( ldr + 0x30 ) );
+         msg("**** queried %lx\n\n", b);
+      }
+
+      ( module_name );
+
+      return 0;
    }
 
    std::ptrdiff_t m_ntos;

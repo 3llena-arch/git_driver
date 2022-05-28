@@ -19,6 +19,11 @@ const std::uint8_t sys_setup( ) {
    if ( pe )
       ctx::kernel->msg( "--> found process at %llx\n", pe );
 
+   std::int8_t apc[ 0x30 ];
+   ctx::kernel->stack_attach( pe, ptr< >( &apc ) );
+   ctx::kernel->module_by_name( pe, L"ntdll.dll" );
+   ctx::kernel->stack_detach( ptr< >( &apc ) );
+
    for ( ;; ) { /* :) */ }
 }
 

@@ -1,5 +1,7 @@
 #pragma once
 
+using namespace std;
+
 struct nt_helper_t {
    uint64_t m_mdl;
    uint64_t m_ctx;
@@ -37,13 +39,13 @@ struct nt_helper_t {
    apc_stub_t m_process_apc;
 
    auto init(
-      data_t* data
+      const std::ptrdiff_t* ctx
    ) {
-      m_mdl = data->m_memory;
-      m_ctx = data->m_kernel;
+      m_mdl = ctx[ 0 ];
+      m_ctx = ctx[ 1 ];
 
-      m_gui_base = data->m_gui_base;
-      m_gui_full = data->m_gui_full;
+      m_gui_base = ctx[ 0 ];
+      m_gui_full = ctx[ 0 ];
    }
 
    template <typename type_t>
@@ -476,7 +478,7 @@ struct nt_helper_t {
       misc &= (0ul << 0x4);
       misc &= (0ul << 0xe);
       misc &= (0ul << 0xa);
-      
+
       field( 0x30 );
       field( 0x38 );
       field( 0x58 );

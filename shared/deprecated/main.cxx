@@ -1,5 +1,3 @@
-#include "shared/shared.hpp"
-
 os_helper_t* os = &__os_helper;
 nt_helper_t* nt = &__nt_helper;
 ui_helper_t* ui = &__ui_helper;
@@ -67,17 +65,4 @@ auto call( ) {
       nt->unspoof_thread( nt->m_src_thread );
       nt->detach_session( nt->m_gui_pe, nt->m_session_apc );
    }
-}
-
-auto main(
-   data_t* ctx_data
-) -> uint32_t {
-   if ( !ctx_data )
-      return os->status_error;
-
-   nt->init( ctx_data );
-   os->init( ctx_data );
-   ui->init( ctx_data );
-
-   return nt->create_thread( &call );
 }

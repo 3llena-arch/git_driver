@@ -1,5 +1,7 @@
 #pragma once
 
+using namespace std;
+
 struct ui_helper_t {
    uint64_t m_gui_base;
    uint64_t m_gui_full;
@@ -13,10 +15,10 @@ struct ui_helper_t {
    uint64_t m_blue_brush;
 
    auto init(
-      data_t* data
+      const std::ptrdiff_t* ctx
    ) {
-      m_gui_base = data->m_gui_base;
-      m_gui_full = data->m_gui_full;
+      m_gui_base = ctx[ 0 ];
+      m_gui_full = ctx[ 1 ];
    }
 
    enum gui_call_t : uint64_t {

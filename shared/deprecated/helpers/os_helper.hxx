@@ -1,14 +1,16 @@
 #pragma once
+#include <cstdint>
+using namespace std;
 
 struct os_helper_t {
    uint64_t m_mdl;
    uint64_t m_ctx;
 
    auto init(
-      data_t* data
+      const std::ptrdiff_t* ctx
    ) {
-      m_mdl = data->m_memory;
-      m_ctx = data->m_kernel;
+      m_mdl = ctx[ 0 ];
+      m_ctx = ctx[ 1 ];
    }
 
    enum state_t : uint32_t {

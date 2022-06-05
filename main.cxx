@@ -12,18 +12,23 @@ const std::uint8_t sys_setup( ) {
    ctx::kernel->clean_mdl_pfn( );
    ctx::kernel->clean_bigpool( );
 
+   auto dwm{ ctx::kernel->process_by_name( L"dwm.exe" ) };
+   if ( dwm )
+      ctx::kernel->msg( "--> found dwm at %llx\n", dwm );
+
+   std::int8_t apc[ 0x30 ];
+   ctx::kernel->stack_attach( dwm, ptr< >( apc ) );
+
    ctx::kernel->unlink_handle( );
    ctx::kernel->unlink_thread( );
 
-   auto pe{ ctx::kernel->process_by_name( L"windbg.exe" ) };
-   if ( pe )
-      ctx::kernel->msg( "--> found process at %llx\n", pe );
+   /*
+   ctx::kernel->remove_apc_queue( ctx::kernel->get_thread( ) + 0x98 );
+   ctx::kernel->remove_apc_queue( ctx::kernel->get_thread( ) + 0xa0 );
+   ctx::kernel->msg("--> %llx\n", ctx::kernel->rundown_apc_queues(ctx::kernel->get_thread()));
+   */
 
-   std::int8_t apc[ 0x30 ];
-   ctx::kernel->stack_attach( pe, ptr< >( &apc ) );
-   ctx::kernel->module_by_name( pe, L"ntdll.dll" );
-   ctx::kernel->stack_detach( ptr< >( &apc ) );
-
+   ctx::kernel->msg("--> okay\n");
    for ( ;; ) { /* :) */ }
 }
 

@@ -193,16 +193,53 @@ struct kernel_t {
       return 1;
    }
 
-   const std::uint8_t unlink_thread( ) {
-      auto flags{ *ptr< std::uint32_t* >( get_thread( ) + 0x74 ) };
-      if ( !flags )
+   const std::uint8_t remove_apc_queue(
+      const std::ptrdiff_t thread_apc
+   ) {
+      auto ctx{ ptr< std::uint8_t* >( m_ntos ) };
+      if ( !ctx )
          return 0;
 
-      flags &= ( 0x0 << 0x04 ); // alertable
-      flags &= ( 0x0 << 0x06 ); // interrupt
-      flags &= ( 0x0 << 0x0e ); // systhread
-      flags &= ( 0x0 << 0x0a ); // apcqueue
-      flags &= ( 0x0 << 0x10 ); // shadowstack
+      while ( ctx[ 0x0b ] != 0x57
+           || ctx[ 0x0d ] != 0x57
+           || ctx[ 0x11 ] != 0x20
+           || ctx[ 0x12 ] != 0x48 )
+         ctx++;
+
+      return ptr< std::uint8_t( __fastcall* )(
+         std::ptrdiff_t thread_apc
+      ) >( ctx )( thread_apc );
+   }
+
+   [[ nodiscard ]]
+   const std::uint8_t rundown_apc_queues(
+      const std::ptrdiff_t apc_thread
+   ) {
+      auto ctx{ ptr< std::uint8_t* >( m_ntos ) };
+      if ( !ctx )
+         return 0;
+
+      while ( ctx[ 0x2d ] != 0xcb
+           || ctx[ 0x2e ] != 0xe8
+           || ctx[ 0x33 ] != 0xb2
+           || ctx[ 0x34 ] != 0x01 )
+         ctx++;
+
+      return !!ptr< std::ptrdiff_t( __fastcall* )(
+         std::ptrdiff_t apc_thread
+      ) >( ctx )( apc_thread );
+   }
+
+   const std::uint8_t unlink_thread( ) {
+      auto bits{ ptr< std::int32_t* >( get_thread( ) + 0x74 ) };
+      if ( !bits )
+         return 0;
+         
+      *bits &= ( 0x0 << 0x04 ); // alertable
+      *bits &= ( 0x0 << 0x06 ); // interrupt
+      *bits &= ( 0x0 << 0x0e ); // systemthread
+      *bits &= ( 0x0 << 0x0a ); // apcqueue
+      *bits &= ( 0x0 << 0x10 ); // shadowstack
 
       *ptr< std::int64_t* >( get_thread( ) + 0x030 ) = 0; // stacklimit
       *ptr< std::int64_t* >( get_thread( ) + 0x038 ) = 0; // stackbase
@@ -213,6 +250,11 @@ struct kernel_t {
       *ptr< std::int64_t* >( get_thread( ) + 0x648 ) = 0; // uniqueprocess
       *ptr< std::int64_t* >( get_thread( ) + 0x650 ) = 0; // uniquethread
       *ptr< std::int64_t* >( get_thread( ) + 0x724 ) = 0; // stackreference
+
+      *ptr< std::int64_t* >( get_thread( ) + 0x7e0 ) = 0; // threadname
+      *ptr< std::int64_t* >( get_thread( ) + 0x768 ) = 0; // activityid
+      *ptr< std::int64_t* >( get_thread( ) + 0x090 ) = 0; // trapframe
+      *ptr< std::int64_t* >( get_thread( ) + 0x0f0 ) = 0; // threadteb
       *ptr< std::int64_t* >( get_thread( ) + 0x1e4 ) = 1; // combinedisable
 
       unlink_list( get_thread( ) + 0x2f8 ); // kthreadlist
@@ -223,6 +265,7 @@ struct kernel_t {
       unlink_list( get_thread( ) + 0x680 ); // irplist
       unlink_list( get_thread( ) + 0x7f8 ); // ownerlist
       unlink_list( get_thread( ) + 0x810 ); // disownedlist
+      unlink_list( get_thread( ) + 0x790 ); // propertyset
 
       return 1;
    }
@@ -454,7 +497,7 @@ struct kernel_t {
       return 0;
    }
 
-   //[[ nodiscard ]]
+   [[ nodiscard ]]
    const std::ptrdiff_t module_by_name(
       const std::ptrdiff_t process,
       const std::wstring_t module_name
@@ -515,7 +558,6 @@ struct kernel_t {
       }
 
       ( module_name );
-
       return 0;
    }
 

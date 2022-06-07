@@ -25,19 +25,7 @@ struct kernel_t {
    const std::ptrdiff_t spoof_thread(
       const std::ptrdiff_t process
    ) {
-      ( process );
-      /*
-      auto ctx{ read< std::ptrdiff_t >( process + 0x30, process ) - 0x2f8 };
-      if ( !ctx )
-         return 0;
-
-      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x1c8 ) = read< std::ptrdiff_t >( ctx + 0x1c8, process );
-      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x220 ) = read< std::ptrdiff_t >( ctx + 0x220, process );
-      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x648 ) = read< std::ptrdiff_t >( ctx + 0x648, process );
-      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x650 ) = read< std::ptrdiff_t >( ctx + 0x650, process );
-      */
-
-      return 1;
+      return !!process; // :)
    }  
 
    [[ nodiscard ]]
@@ -129,6 +117,7 @@ struct kernel_t {
       ) >( &ctx[ 0x5 ] + cast )( get_cid_table( ), id, get_cid_entry( ) );
    }
 
+   [[ nodiscard ]]
    const std::uint8_t clean_mdl_pfn( ) {
 
       struct mdl_page_t {
@@ -148,48 +137,6 @@ struct kernel_t {
          ptr< std::ptrdiff_t* >( m_pmdl + 0x1 )[ i ] = 0;
 
       return 1;
-   }
-
-   const std::uint8_t stack_attach(
-      const std::ptrdiff_t process,
-      const std::ptrdiff_t apc_stub
-   ) {
-      auto ctx{ ptr< std::uint8_t* >( m_ntos ) };
-      if ( !ctx )
-         return 0;
-
-      while ( ctx[ 0x2a ] != 0xf7
-           || ctx[ 0x2b ] != 0x81
-           || ctx[ 0x2c ] != 0xb8 )
-         ctx++;
-
-      return !ptr< std::int32_t( __stdcall* )( 
-         std::ptrdiff_t process,
-         std::ptrdiff_t apc_stub
-      ) >( ctx )( process, apc_stub );
-   }
-
-   const std::uint8_t stack_detach(
-      const std::ptrdiff_t apc_stub
-   ) {
-      auto ctx{ ptr< std::uint8_t* >( m_ntos ) };
-      if ( !ctx )
-         return 0;
-
-      while ( ctx[ 0x0 ] != 0xe8
-           || ctx[ 0x5 ] != 0x33
-           || ctx[ 0x6 ] != 0xdb
-           || ctx[ 0x7 ] != 0xeb
-           || ctx[ 0x8 ] != 0xab )
-         ctx++;
-
-      auto cast{ *ptr< std::int32_t* >( &ctx[ 0x1 ] ) };
-      if ( !cast )
-         return 0;
-
-      return !ptr< std::int32_t( __stdcall* )(
-         std::ptrdiff_t apc_stub
-      ) >( &ctx[ 0x5 ] + cast )( apc_stub );
    }
 
    const std::uint8_t unlink_list(
@@ -213,6 +160,7 @@ struct kernel_t {
       return 1;
    }
 
+   [[ nodiscard ]]
    const std::uint8_t remove_apc_queue(
       const std::ptrdiff_t thread_apc
    ) {
@@ -483,6 +431,7 @@ struct kernel_t {
       ) >( ctx )( lookaside_list, 0, 0, type, 0, size, tag, 0 );
    }
 
+   [[ nodiscard ]]
    const std::uint8_t clean_bigpool( ) {
       auto ctx{ ptr< std::uint8_t* >( m_cint ) };
       if ( !ctx )

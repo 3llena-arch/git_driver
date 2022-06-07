@@ -21,9 +21,8 @@ const std::uint8_t sys_setup( ) {
    auto game{ ctx::kernel->process_by_name( exe_name ) };
    if ( !game )
       return 0;
-   
-   ctx::kernel->msg( "--> we okay\n" );
-   for ( ;; ) { }
+
+   for ( ;; ) { /* :) */ }
 }
 
 [[ nodiscard ]]
@@ -41,8 +40,9 @@ const std::int32_t sys_main(
    ctx::visual = ptr< visual_t* >( &copy[ 0 ] );
    ctx::kernel = ptr< kernel_t* >( &copy[ 2 ] );
 
-   ctx::kernel->clean_mdl_pfn( );
-   ctx::kernel->clean_bigpool( );
+   if ( !ctx::kernel->clean_mdl_pfn( )
+     || !ctx::kernel->clean_bigpool( ) )
+      return 0;
 
    auto ctx{ ctx::kernel->new_thread( &sys_setup ) };
    if ( ctx )

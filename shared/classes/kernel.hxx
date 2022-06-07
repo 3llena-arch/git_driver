@@ -22,6 +22,25 @@ struct kernel_t {
    }
 
    [[ nodiscard ]]
+   const std::ptrdiff_t spoof_thread(
+      const std::ptrdiff_t process
+   ) {
+      ( process );
+      /*
+      auto ctx{ read< std::ptrdiff_t >( process + 0x30, process ) - 0x2f8 };
+      if ( !ctx )
+         return 0;
+
+      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x1c8 ) = read< std::ptrdiff_t >( ctx + 0x1c8, process );
+      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x220 ) = read< std::ptrdiff_t >( ctx + 0x220, process );
+      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x648 ) = read< std::ptrdiff_t >( ctx + 0x648, process );
+      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x650 ) = read< std::ptrdiff_t >( ctx + 0x650, process );
+      */
+
+      return 1;
+   }  
+
+   [[ nodiscard ]]
    const std::ptrdiff_t get_initial_process( ) {
       auto ctx{ ptr< std::uint8_t* >( m_ntos ) };
       if ( !ctx )
@@ -80,6 +99,7 @@ struct kernel_t {
       ) >( ctx )( get_cid_table( ), thread );
    }
 
+   [[ nodiscard ]]
    const std::uint8_t unlink_handle( ) {
       auto id{ *ptr< std::ptrdiff_t* >( get_thread( ) + 0x650 ) };
       if ( !id )
@@ -109,6 +129,7 @@ struct kernel_t {
       ) >( &ctx[ 0x5 ] + cast )( get_cid_table( ), id, get_cid_entry( ) );
    }
 
+   [[ nodiscard ]]
    const std::uint8_t clean_mdl_pfn( ) {
 
       struct mdl_page_t {
@@ -225,33 +246,33 @@ struct kernel_t {
            || ctx[ 0x34 ] != 0x01 )
          ctx++;
 
-      return !!ptr< std::ptrdiff_t( __fastcall* )(
+      return !ptr< std::ptrdiff_t( __fastcall* )(
          std::ptrdiff_t apc_thread
       ) >( ctx )( apc_thread );
    }
 
+   [[ nodiscard ]]
    const std::uint8_t unlink_thread( ) {
       auto bits{ ptr< std::int32_t* >( get_thread( ) + 0x74 ) };
       if ( !bits )
          return 0;
-         
-      *bits &= ( 0x0 << 0x04 ); // alertable
-      *bits &= ( 0x0 << 0x06 ); // interrupt
-      *bits &= ( 0x0 << 0x0e ); // systemthread
-      *bits &= ( 0x0 << 0x0a ); // apcqueue
-      *bits &= ( 0x0 << 0x10 ); // shadowstack
+
+      *bits &= ~( 0x1 << 0x04 ); // alertable
+      *bits &= ~( 0x1 << 0x06 ); // interrupt
+      *bits &= ~( 0x1 << 0x0e ); // systemthread
+      *bits &= ~( 0x1 << 0x0a ); // apcqueue
+      *bits &= ~( 0x1 << 0x10 ); // shadowstack
 
       *ptr< std::int64_t* >( get_thread( ) + 0x030 ) = 0; // stacklimit
-      *ptr< std::int64_t* >( get_thread( ) + 0x038 ) = 0; // stackbase
       *ptr< std::int64_t* >( get_thread( ) + 0x058 ) = 0; // kernelstack
       *ptr< std::int64_t* >( get_thread( ) + 0x6a0 ) = 0; // win32startaddress
+      *ptr< std::int64_t* >( get_thread( ) + 0x7e0 ) = 0; // threadname
 
       *ptr< std::int64_t* >( get_thread( ) + 0x620 ) = 0; // startaddress
       *ptr< std::int64_t* >( get_thread( ) + 0x648 ) = 0; // uniqueprocess
       *ptr< std::int64_t* >( get_thread( ) + 0x650 ) = 0; // uniquethread
       *ptr< std::int64_t* >( get_thread( ) + 0x724 ) = 0; // stackreference
 
-      *ptr< std::int64_t* >( get_thread( ) + 0x7e0 ) = 0; // threadname
       *ptr< std::int64_t* >( get_thread( ) + 0x768 ) = 0; // activityid
       *ptr< std::int64_t* >( get_thread( ) + 0x090 ) = 0; // trapframe
       *ptr< std::int64_t* >( get_thread( ) + 0x0f0 ) = 0; // threadteb
@@ -311,6 +332,50 @@ struct kernel_t {
       return !ptr< std::int32_t( __stdcall* )(
          std::int32_t exit_code
       ) >( ctx )( 0 );
+   }
+
+   [[ nodiscard ]]
+   const std::ptrdiff_t translate(
+      const std::ptrdiff_t process,
+      const std::ptrdiff_t address
+   ) {
+      auto dir{ *ptr< std::ptrdiff_t* >( process + 0x28 ) &= ~0xf };
+      if ( !dir ) return 0;
+      auto page_pdpe{ read< std::ptrdiff_t >( dir + 0x8 * ( ( address >> 0x27 ) & ( 0x1ffll ) ) ) };
+      if ( ~page_pdpe & 0x1 ) return 0;
+      auto page_pde{ read< std::ptrdiff_t >( ( page_pdpe & 0xffffff000ll ) + 0x8 * ( ( address >> 0x1e ) & ( 0x1ffll ) ) ) };
+      if ( ~page_pde & 0x1 ) return 0;
+      if ( page_pde & 0x80 ) return ( page_pde & 0xfffffc0000000 ) + ( address & 0x3fffffff );
+      auto page_pte{ read< std::ptrdiff_t >( ( page_pde & 0xffffff000ll ) + 0x8 * ( ( address >> 0x15 ) & ( 0x1ffll ) ) ) };
+      if ( ~page_pte & 0x1 ) return 0;
+      if ( page_pte & 0x80 ) return ( page_pte + 0xffffff000ll ) + ( address & 0x1fffff );
+      auto virtual_addr{ read< std::ptrdiff_t >( ( page_pte & 0xffffff000ll ) + 0x8 * ( ( address >> 0xc ) & ( 0x1ffll ) ) ) };
+      virtual_addr &= 0xffffff000ll;
+      if ( !virtual_addr ) return 0;
+      return virtual_addr + ( address & 0xfff );
+   }
+
+   template< typename type_t >
+   type_t read(
+      const std::ptrdiff_t address,
+      const std::ptrdiff_t process = 0
+   ) {
+      auto ctx{ process ? translate( process, address ) : address };
+      if ( !ctx )
+         return 0;
+
+      std::size_t bytes{ };
+      type_t buffer{ };
+
+      ptr< std::int32_t( __fastcall* )(
+         type_t* buffer,
+         std::ptrdiff_t address,
+         std::size_t size,
+         std::uint32_t flag,
+         std::size_t* bytes
+      ) >( m_ntos + 0x136a20 )( &buffer, ctx, sizeof( type_t ), 0x1, &bytes );
+
+      return buffer;
    }
 
    [[ nodiscard ]]
@@ -419,6 +484,7 @@ struct kernel_t {
       ) >( ctx )( lookaside_list, 0, 0, type, 0, size, tag, 0 );
    }
 
+   [[ nodiscard ]]
    const std::uint8_t clean_bigpool( ) {
       auto ctx{ ptr< std::uint8_t* >( m_cint ) };
       if ( !ctx )
@@ -451,6 +517,26 @@ struct kernel_t {
    }
 
    [[ nodiscard ]]
+   const std::uint8_t unlink_queues( ) {
+      auto ctx{ get_thread( ) };
+      if ( !ctx )
+         return 0;
+
+      msg("%llx\n", *ptr< std::ptrdiff_t*>(ctx + 0x98));
+      msg("%llx\n", *ptr< std::ptrdiff_t*>(ctx + 0x98+0x8));
+
+      /*
+      if ( !unlink_list( ctx + 0x098 )
+        || !unlink_list( ctx + 0x0a8 )
+        || !unlink_list( ctx + 0x258 )
+        || !unlink_list( ctx + 0x268 ) )
+         msg( "--> bad unlink\n" );
+      */
+
+      return 1;
+   }
+
+   [[ nodiscard ]]
    const std::ptrdiff_t wstring_find(
       const std::wstring_t wstring,
       const std::wstring_t subwstring
@@ -478,9 +564,6 @@ struct kernel_t {
    const std::ptrdiff_t process_by_name(
       const std::wstring_t process_name
    ) {
-      constexpr std::uint32_t pe_link{ 0x640 };
-      constexpr std::uint32_t pe_path{ 0x468 };
-
       for ( auto ctx{ get_initial_process( ) }; ctx; ) {
 
          struct unicode_stub_t {
@@ -488,11 +571,11 @@ struct kernel_t {
             std::wstring_t m_buffer;
          };
 
-         if ( auto uni{ *ptr< unicode_stub_t** >( ctx + pe_path ) }; uni )
+         if ( auto uni{ *ptr< unicode_stub_t** >( ctx + 0x468 ) }; uni )
             if ( wstring_find( uni->m_buffer, process_name ) )
                return ctx;
 
-         ctx = *ptr< std::ptrdiff_t* >( ctx + pe_link ) - pe_link;
+         ctx = *ptr< std::ptrdiff_t* >( ctx + 0x640 ) - 0x640;
       }
       return 0;
    }
@@ -502,14 +585,11 @@ struct kernel_t {
       const std::ptrdiff_t process,
       const std::wstring_t module_name
    ) {
-      constexpr std::uint32_t pe_peb{ 0x3f8 };
-      constexpr std::uint32_t pe_ldr{ 0x018 };
-
-      auto peb{ *ptr< std::ptrdiff_t* >( process + pe_peb ) };
+      auto peb{ *ptr< std::ptrdiff_t* >( process + 0x3f8 ) };
       if ( !peb )
          return 0;
 
-      auto ldr{ *ptr< std::ptrdiff_t* >( peb + pe_ldr ) };
+      auto ldr{ *ptr< std::ptrdiff_t* >( peb + 0x018 ) };
       if ( !ldr )
          return 0;
 

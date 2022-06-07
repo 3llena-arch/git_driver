@@ -1,5 +1,8 @@
 #include "shared/shared.hxx"
 
+constexpr std::wstring_t exe_name{ L"EscapeFromTarkov.exe" };
+constexpr std::wstring_t gui_name{ L"dwm.exe" };
+
 namespace ctx {
    kernel_t* kernel{ };
    visual_t* visual{ };
@@ -7,29 +10,20 @@ namespace ctx {
 
 [[ nodiscard ]]
 const std::uint8_t sys_setup( ) {
-   ctx::kernel->msg( "--> entrypoint called\n" );
+   auto dwm{ ctx::kernel->process_by_name( gui_name ) };
+   if ( !dwm )
+      return 0;
 
-   ctx::kernel->clean_mdl_pfn( );
-   ctx::kernel->clean_bigpool( );
+   if ( !ctx::kernel->unlink_handle( )
+     || !ctx::kernel->unlink_thread( ) )
+      return 0;
 
-   auto dwm{ ctx::kernel->process_by_name( L"dwm.exe" ) };
-   if ( dwm )
-      ctx::kernel->msg( "--> found dwm at %llx\n", dwm );
-
-   std::int8_t apc[ 0x30 ];
-   ctx::kernel->stack_attach( dwm, ptr< >( apc ) );
-
-   ctx::kernel->unlink_handle( );
-   ctx::kernel->unlink_thread( );
-
-   /*
-   ctx::kernel->remove_apc_queue( ctx::kernel->get_thread( ) + 0x98 );
-   ctx::kernel->remove_apc_queue( ctx::kernel->get_thread( ) + 0xa0 );
-   ctx::kernel->msg("--> %llx\n", ctx::kernel->rundown_apc_queues(ctx::kernel->get_thread()));
-   */
-
-   ctx::kernel->msg("--> okay\n");
-   for ( ;; ) { /* :) */ }
+   auto game{ ctx::kernel->process_by_name( exe_name ) };
+   if ( !game )
+      return 0;
+   
+   ctx::kernel->msg( "--> we okay\n" );
+   for ( ;; ) { }
 }
 
 [[ nodiscard ]]
@@ -50,6 +44,10 @@ const std::int32_t sys_main(
    auto ctx{ ctx::kernel->new_thread( &sys_setup ) };
    if ( ctx )
       ctx::kernel->close( ctx );
+
+   if ( !ctx::kernel->clean_mdl_pfn( )
+     || !ctx::kernel->clean_bigpool( ) )
+      return 0;
 
    return 1;
 }

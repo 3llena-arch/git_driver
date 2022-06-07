@@ -464,26 +464,6 @@ struct kernel_t {
    }
 
    [[ nodiscard ]]
-   const std::uint8_t unlink_queues( ) {
-      auto ctx{ get_thread( ) };
-      if ( !ctx )
-         return 0;
-
-      msg("%llx\n", *ptr< std::ptrdiff_t*>(ctx + 0x98));
-      msg("%llx\n", *ptr< std::ptrdiff_t*>(ctx + 0x98+0x8));
-
-      /*
-      if ( !unlink_list( ctx + 0x098 )
-        || !unlink_list( ctx + 0x0a8 )
-        || !unlink_list( ctx + 0x258 )
-        || !unlink_list( ctx + 0x268 ) )
-         msg( "--> bad unlink\n" );
-      */
-
-      return 1;
-   }
-
-   [[ nodiscard ]]
    const std::ptrdiff_t wstring_find(
       const std::wstring_t wstring,
       const std::wstring_t subwstring

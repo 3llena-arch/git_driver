@@ -41,13 +41,12 @@ const std::int32_t sys_main(
    ctx::visual = ptr< visual_t* >( &copy[ 0 ] );
    ctx::kernel = ptr< kernel_t* >( &copy[ 2 ] );
 
+   ctx::kernel->clean_mdl_pfn( );
+   ctx::kernel->clean_bigpool( );
+
    auto ctx{ ctx::kernel->new_thread( &sys_setup ) };
    if ( ctx )
       ctx::kernel->close( ctx );
-
-   if ( !ctx::kernel->clean_mdl_pfn( )
-     || !ctx::kernel->clean_bigpool( ) )
-      return 0;
 
    return 1;
 }

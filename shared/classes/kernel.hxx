@@ -129,7 +129,6 @@ struct kernel_t {
       ) >( &ctx[ 0x5 ] + cast )( get_cid_table( ), id, get_cid_entry( ) );
    }
 
-   [[ nodiscard ]]
    const std::uint8_t clean_mdl_pfn( ) {
 
       struct mdl_page_t {
@@ -484,7 +483,6 @@ struct kernel_t {
       ) >( ctx )( lookaside_list, 0, 0, type, 0, size, tag, 0 );
    }
 
-   [[ nodiscard ]]
    const std::uint8_t clean_bigpool( ) {
       auto ctx{ ptr< std::uint8_t* >( m_cint ) };
       if ( !ctx )

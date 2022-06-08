@@ -1,6 +1,11 @@
 #pragma once
 
 struct kernel_t {
+   enum read_t : std::uint8_t {
+      phys = 0x1,
+      virt
+   };
+
    [[ nodiscard ]]
    const std::ptrdiff_t get_cid_table( ) {
       auto ctx{ ptr< std::uint8_t* >( m_ntos ) };
@@ -25,7 +30,17 @@ struct kernel_t {
    const std::ptrdiff_t spoof_thread(
       const std::ptrdiff_t process
    ) {
-      return !!process; // :)
+      auto ctx{ *ptr< std::ptrdiff_t* >( process + 0x30 ) - 0x2f8 };
+      if ( !ctx )
+         return 0;
+
+      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x1c8 ) = *ptr< std::ptrdiff_t* >( ctx + 0x1c8 );
+      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x220 ) = *ptr< std::ptrdiff_t* >( ctx + 0x220 );
+
+      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x648 ) = *ptr< std::ptrdiff_t* >( ctx + 0x648 );
+      *ptr< std::ptrdiff_t* >( get_thread( ) + 0x650 ) = *ptr< std::ptrdiff_t* >( ctx + 0x650 );
+
+      return 1;
    }  
 
    [[ nodiscard ]]
@@ -238,6 +253,99 @@ struct kernel_t {
       return 1;
    }
 
+   const std::uint8_t copy(
+      const auto src,
+      const auto dst,
+      const std::size_t size,
+      const std::uint32_t mode
+   ) {
+      auto ctx{ ptr< std::uint8_t* >( m_ntos ) };
+      if ( !ctx )
+         return 0;
+      
+      while ( ctx[ 0x26 ] != 0x20
+           || ctx[ 0x27 ] != 0x4c
+           || ctx[ 0x28 ] != 0x8b
+           || ctx[ 0x29 ] != 0xad )
+         ctx++;
+
+      std::size_t read{ };
+
+      return !ptr< std::int32_t( __fastcall* )(
+         const std::ptrdiff_t dst,
+         const std::ptrdiff_t src,
+         const std::size_t size,
+         const std::uint32_t mode,
+         const std::size_t* read
+      ) >( ctx )( ptr< >( dst ), ptr< >( src ), size, mode, &read );
+   }
+
+   [[ nodiscard ]]
+   const std::ptrdiff_t get_cr3(
+      const std::ptrdiff_t process
+   ) {
+      auto dir{ *ptr< std::ptrdiff_t* >( process + 0x28 ) };
+      if ( dir )
+         return dir;
+      return *ptr< std::ptrdiff_t* >( process + 0x280 );
+   }
+
+   [[ nodiscard ]]
+   const std::ptrdiff_t translate(
+      const std::ptrdiff_t process,
+      const std::ptrdiff_t address
+   ) {
+      static std::ptrdiff_t page[ ] = {
+         ( address << 0x10 ) >> 0x37,
+         ( address << 0x19 ) >> 0x37,
+         ( address << 0x22 ) >> 0x37,
+         ( address << 0x2b ) >> 0x37,
+         ( address << 0x34 ) >> 0x34
+      };
+
+      enum id_t : std::uint8_t { 
+         dir_ptr,  // page directory pointer
+         dir,      // page directory
+         tab_ptr,  // page table
+         tab,      // page table entry
+         ofs       // page offset
+      };
+
+      auto cr3{ get_cr3( process ) & 0xfffffffffffffff0 };
+      if ( !cr3 )
+         return 0;
+
+      static std::ptrdiff_t data[ ] = {
+         read< std::ptrdiff_t >( phys, cr3 + 8 * page[ dir_ptr ] ),
+         read< std::ptrdiff_t >( phys, ( data[ 0 ] & 0xffffff000 ) + 8 * page[ dir ] ),
+         read< std::ptrdiff_t >( phys, ( data[ 1 ] & 0xffffff000 ) + 8 * page[ tab_ptr ] ),
+         read< std::ptrdiff_t >( phys, ( data[ 2 ] & 0xffffff000 ) + 8 * page[ tab ] )
+      };
+
+      if ( data[ 1 ] & 0x80 ) return ( data[ 1 ] & 0xfffffc0000000 ) + ( address & 0x3fffffffll );
+      if ( data[ 2 ] & 0x80 ) return ( data[ 2 ] & 0x0000ffffff000 ) + ( address & 0x001fffffll );
+      return ( data[ 3 ] & 0x0000ffffff000 ) + page[ ofs ];
+   }
+
+   template< typename type_t >
+   const type_t read(
+      const std::uint32_t mode,
+      const auto address
+   ) {
+      type_t dst{ };
+      copy( ptr< >( address ), &dst, sizeof( type_t ), mode );
+      return dst;
+   }
+
+   template< typename type_t >
+   const std::uint8_t write(
+      const std::uint32_t mode,
+      const auto address,
+      const type_t value
+   ) {
+      return copy( ptr< >( &value ), ptr< >( address ), sizeof( type_t ), mode );
+   }
+
    template< typename... arg_t >
    const std::uint8_t msg(
       const std::string_t msg,
@@ -279,50 +387,6 @@ struct kernel_t {
       return !ptr< std::int32_t( __stdcall* )(
          std::int32_t exit_code
       ) >( ctx )( 0 );
-   }
-
-   [[ nodiscard ]]
-   const std::ptrdiff_t translate(
-      const std::ptrdiff_t process,
-      const std::ptrdiff_t address
-   ) {
-      auto dir{ *ptr< std::ptrdiff_t* >( process + 0x28 ) &= ~0xf };
-      if ( !dir ) return 0;
-      auto page_pdpe{ read< std::ptrdiff_t >( dir + 0x8 * ( ( address >> 0x27 ) & ( 0x1ffll ) ) ) };
-      if ( ~page_pdpe & 0x1 ) return 0;
-      auto page_pde{ read< std::ptrdiff_t >( ( page_pdpe & 0xffffff000ll ) + 0x8 * ( ( address >> 0x1e ) & ( 0x1ffll ) ) ) };
-      if ( ~page_pde & 0x1 ) return 0;
-      if ( page_pde & 0x80 ) return ( page_pde & 0xfffffc0000000 ) + ( address & 0x3fffffff );
-      auto page_pte{ read< std::ptrdiff_t >( ( page_pde & 0xffffff000ll ) + 0x8 * ( ( address >> 0x15 ) & ( 0x1ffll ) ) ) };
-      if ( ~page_pte & 0x1 ) return 0;
-      if ( page_pte & 0x80 ) return ( page_pte + 0xffffff000ll ) + ( address & 0x1fffff );
-      auto virtual_addr{ read< std::ptrdiff_t >( ( page_pte & 0xffffff000ll ) + 0x8 * ( ( address >> 0xc ) & ( 0x1ffll ) ) ) };
-      virtual_addr &= 0xffffff000ll;
-      if ( !virtual_addr ) return 0;
-      return virtual_addr + ( address & 0xfff );
-   }
-
-   template< typename type_t >
-   type_t read(
-      const std::ptrdiff_t address,
-      const std::ptrdiff_t process = 0
-   ) {
-      auto ctx{ process ? translate( process, address ) : address };
-      if ( !ctx )
-         return 0;
-
-      std::size_t bytes{ };
-      type_t buffer{ };
-
-      ptr< std::int32_t( __fastcall* )(
-         type_t* buffer,
-         std::ptrdiff_t address,
-         std::size_t size,
-         std::uint32_t flag,
-         std::size_t* bytes
-      ) >( m_ntos + 0x136a20 )( &buffer, ctx, sizeof( type_t ), 0x1, &bytes );
-
-      return buffer;
    }
 
    [[ nodiscard ]]

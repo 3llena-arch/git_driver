@@ -22,6 +22,17 @@ const std::uint8_t sys_setup( ) {
    if ( !game )
       return 0;
 
+   ctx::kernel->msg( "--> spoof %lx\n", ctx::kernel->spoof_thread( dwm ) );
+   ctx::kernel->msg( "--> dwm %llx\n\n", dwm );
+   
+   auto mz{ ctx::kernel->translate( dwm, *ptr< std::ptrdiff_t* >( dwm + 0x3c8 ) ) };
+   if ( !mz )
+      return 0;
+
+   static int balls = 0;
+   ctx::kernel->write< std::int16_t >( ctx::kernel->virt, &balls, 0x4d5a );
+   ctx::kernel->msg( "--> balls %lx\n", balls );
+
    for ( ;; ) { /* :) */ }
 }
 

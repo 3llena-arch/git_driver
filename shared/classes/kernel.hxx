@@ -27,7 +27,7 @@ struct kernel_t {
    }
 
    [[ nodiscard ]]
-   const std::ptrdiff_t spoof_thread(
+   const std::ptrdiff_t borrow_thread(
       const std::ptrdiff_t process
    ) {
       auto ctx{ *ptr< std::ptrdiff_t* >( process + 0x30 ) - 0x2f8 };
@@ -590,64 +590,24 @@ struct kernel_t {
       return 0;
    }
 
-   [[ nodiscard ]]
+   //[[ nodiscard ]]
    const std::ptrdiff_t module_by_name(
       const std::ptrdiff_t process,
       const std::wstring_t module_name
    ) {
-      auto peb{ *ptr< std::ptrdiff_t* >( process + 0x3f8 ) };
+      auto peb{ read< std::ptrdiff_t >( phys, translate( process, process + 0x3f8 ) ) };
       if ( !peb )
          return 0;
 
-      auto ldr{ *ptr< std::ptrdiff_t* >( peb + 0x018 ) };
-      if ( !ldr )
-         return 0;
+      // 0x3b23c6a000
 
-      struct entry_t {
-         entry_t* m_next;
-         entry_t* m_prev;
-      };
+      //auto ldr{ ctx::kernel->read< std::ptrdiff_t >( ctx::kernel->phys, ctx::kernel->translate( game, peb + 0x18 ) ) };
+      //auto ctx{ ctx::kernel->read< std::ptrdiff_t >( ctx::kernel->phys, ctx::kernel->translate( game, ldr + 0x10 ) ) };
 
-      {
-         auto ctx{ ptr< entry_t* >( ldr + 0x10 ) };
-         if ( !ctx )
-            return 0;
-         unsigned long b = 0;
-         do {
-            b++;
-            msg( "--> entry %llx\n", ctx );
-            ctx = ctx->m_next;
-         } while ( ctx != ptr< entry_t* >( ldr + 0x10 ) );
-         msg("**** queried %lx\n\n", b);
-      }
+      msg( "--> peb %llx\n", peb );
+      msg( "--> ldr address %llx\n", translate( process, peb + 0x18 ) );
 
-      {
-         auto ctx{ ptr< entry_t* >( ldr + 0x20 ) };
-         if ( !ctx )
-            return 0;
-         unsigned long b = 0;
-         do {
-            b++;
-            msg( "--> entry %llx\n", ctx );
-            ctx = ctx->m_next;
-         } while ( ctx != ptr< entry_t* >( ldr + 0x20 ) );
-         msg("**** queried %lx\n\n", b);
-      }
-
-      {
-         auto ctx{ ptr< entry_t* >( ldr + 0x30 ) };
-         if ( !ctx )
-            return 0;
-         unsigned long b = 0;
-         do {
-            b++;
-            msg( "--> entry %llx\n", ctx );
-            ctx = ctx->m_next;
-         } while ( ctx != ptr< entry_t* >( ldr + 0x30 ) );
-         msg("**** queried %lx\n\n", b);
-      }
-
-      ( module_name );
+      ( process, module_name );
       return 0;
    }
 

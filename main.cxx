@@ -18,25 +18,25 @@ const std::uint8_t sys_setup( ) {
    ctx::kernel->stack_attach( dwm, apc );
 
    if ( !ctx::kernel->unlink_handle( )
-     || !ctx::kernel->unlink_thread( ) )
+     || !ctx::kernel->unlink_thread( )
+     || !ctx::kernel->borrow_thread( dwm ) )
       return 0;
 
    auto game{ ctx::kernel->process_by_name( exe_name ) };
    if ( !game )
       return 0;
 
-   ctx::kernel->msg( "--> spoof %lx\n", ctx::kernel->spoof_thread( dwm ) );
-   ctx::kernel->msg( "--> dwm %llx\n\n", dwm );
-   
-   auto mz{ ctx::kernel->translate( dwm, *ptr< std::ptrdiff_t* >( dwm + 0x3c8 ) ) };
-   if ( !mz )
-      return 0;
+   ctx::kernel->module_by_name( game, exe_name );
 
-   static int balls = 0;
-   ctx::kernel->write< std::int16_t >( ctx::kernel->virt, &balls, 0x4d5a );
-   ctx::kernel->msg( "--> balls %lx\n", balls );
+   for ( ;; ) {
+      /*
+      auto hdc{ ctx::visual->get_display( 0 ) };   
+      if ( !hdc )
+         continue;
 
-   for ( ;; ) { /* :) */ }
+      ctx::visual->end_display( hdc );
+      */
+   }
 }
 
 [[ nodiscard ]]

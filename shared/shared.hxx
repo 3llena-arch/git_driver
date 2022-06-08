@@ -28,6 +28,5 @@ namespace std {
    type_t ptr( auto addr ) { return ( type_t )addr; };
 #endif
 
-#include "types/vector.hxx"
 #include "classes/kernel.hxx"
 #include "classes/visual.hxx"

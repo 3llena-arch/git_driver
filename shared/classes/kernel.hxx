@@ -290,6 +290,25 @@ struct kernel_t {
       return *ptr< std::ptrdiff_t* >( process + 0x280 );
    }
 
+   const std::uint8_t stack_attach(
+      const std::ptrdiff_t process,
+      const std::int8_t* apc_stub
+   ) {
+      auto ctx{ ptr< std::uint8_t* >( m_ntos ) };
+      if ( !ctx )
+         return 0;
+
+      while ( ctx[ 0x2a ] != 0xf7
+           || ctx[ 0x2b ] != 0x81
+           || ctx[ 0x2c ] != 0xb8 )
+         ctx++;
+
+      return !ptr< std::int32_t( __stdcall* )( 
+         std::ptrdiff_t process,
+         std::ptrdiff_t apc_stub
+      ) >( ctx )( process, ptr< >( apc_stub ) );
+   }
+
    [[ nodiscard ]]
    const std::ptrdiff_t translate(
       const std::ptrdiff_t process,

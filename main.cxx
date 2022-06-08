@@ -14,6 +14,9 @@ const std::uint8_t sys_setup( ) {
    if ( !dwm )
       return 0;
 
+   std::int8_t apc[ 0x30 ];
+   ctx::kernel->stack_attach( dwm, apc );
+
    if ( !ctx::kernel->unlink_handle( )
      || !ctx::kernel->unlink_thread( ) )
       return 0;

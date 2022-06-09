@@ -21,22 +21,16 @@ const std::uint8_t sys_setup( ) {
      || !ctx::kernel->unlink_thread( )
      || !ctx::kernel->borrow_thread( dwm ) )
       return 0;
-
+   
    auto game{ ctx::kernel->process_by_name( exe_name ) };
    if ( !game )
       return 0;
 
-   ctx::kernel->module_by_name( game, exe_name );
+   auto image{ ctx::kernel->module_by_name( game, L"UnityPlayer.dll" ) };
+   if ( image )
+      ctx::kernel->msg( "--> got module at %llx\n", image );
 
-   for ( ;; ) {
-      /*
-      auto hdc{ ctx::visual->get_display( 0 ) };   
-      if ( !hdc )
-         continue;
-
-      ctx::visual->end_display( hdc );
-      */
-   }
+   for ( ;; ) { /* :) */ }
 }
 
 [[ nodiscard ]]

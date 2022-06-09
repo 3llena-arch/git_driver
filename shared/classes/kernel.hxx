@@ -242,13 +242,6 @@ struct kernel_t {
 
       unlink_list( get_thread( ) + 0x2f8 ); // kthreadlist
       unlink_list( get_thread( ) + 0x6b8 ); // ethreadlist
-      unlink_list( get_thread( ) + 0x0d8 ); // waitlist
-      unlink_list( get_thread( ) + 0x608 ); // waitchain
-
-      unlink_list( get_thread( ) + 0x680 ); // irplist
-      unlink_list( get_thread( ) + 0x7f8 ); // ownerlist
-      unlink_list( get_thread( ) + 0x810 ); // disownedlist
-      unlink_list( get_thread( ) + 0x790 ); // propertyset
 
       return 1;
    }
@@ -314,7 +307,7 @@ struct kernel_t {
       const std::ptrdiff_t process,
       const std::ptrdiff_t address
    ) {
-      static std::ptrdiff_t page[ ] = {
+      const std::ptrdiff_t page[ ] = {
          ( address << 0x10 ) >> 0x37,
          ( address << 0x19 ) >> 0x37,
          ( address << 0x22 ) >> 0x37,
@@ -334,11 +327,11 @@ struct kernel_t {
       if ( !cr3 )
          return 0;
 
-      static std::ptrdiff_t data[ ] = {
-         read< std::ptrdiff_t >( phys, cr3 + 8 * page[ dir_ptr ] ),
-         read< std::ptrdiff_t >( phys, ( data[ 0 ] & 0xffffff000 ) + 8 * page[ dir ] ),
-         read< std::ptrdiff_t >( phys, ( data[ 1 ] & 0xffffff000 ) + 8 * page[ tab_ptr ] ),
-         read< std::ptrdiff_t >( phys, ( data[ 2 ] & 0xffffff000 ) + 8 * page[ tab ] )
+      const std::ptrdiff_t data[ ] = {
+         read< phys, std::ptrdiff_t >( cr3 + 8 * page[ dir_ptr ] ),
+         read< phys, std::ptrdiff_t >( ( data[ 0 ] & 0xffffff000 ) + 8 * page[ dir ] ),
+         read< phys, std::ptrdiff_t >( ( data[ 1 ] & 0xffffff000 ) + 8 * page[ tab_ptr ] ),
+         read< phys, std::ptrdiff_t >( ( data[ 2 ] & 0xffffff000 ) + 8 * page[ tab ] )
       };
 
       if ( data[ 1 ] & 0x80 ) return ( data[ 1 ] & 0xfffffc0000000 ) + ( address & 0x3fffffffll );
@@ -346,13 +339,12 @@ struct kernel_t {
       return ( data[ 3 ] & 0x0000ffffff000 ) + page[ ofs ];
    }
 
-   template< typename type_t >
+   template< std::uint32_t mode_t, typename type_t >
    const type_t read(
-      const std::uint32_t mode,
       const auto address
    ) {
       type_t dst{ };
-      copy( ptr< >( address ), &dst, sizeof( type_t ), mode );
+      copy( ptr< >( address ), &dst, sizeof( type_t ), mode_t );
       return dst;
    }
 
@@ -590,23 +582,11 @@ struct kernel_t {
       return 0;
    }
 
-   //[[ nodiscard ]]
+   [[ nodiscard ]]
    const std::ptrdiff_t module_by_name(
       const std::ptrdiff_t process,
       const std::wstring_t module_name
    ) {
-      auto peb{ read< std::ptrdiff_t >( phys, translate( process, process + 0x3f8 ) ) };
-      if ( !peb )
-         return 0;
-
-      // 0x3b23c6a000
-
-      //auto ldr{ ctx::kernel->read< std::ptrdiff_t >( ctx::kernel->phys, ctx::kernel->translate( game, peb + 0x18 ) ) };
-      //auto ctx{ ctx::kernel->read< std::ptrdiff_t >( ctx::kernel->phys, ctx::kernel->translate( game, ldr + 0x10 ) ) };
-
-      msg( "--> peb %llx\n", peb );
-      msg( "--> ldr address %llx\n", translate( process, peb + 0x18 ) );
-
       ( process, module_name );
       return 0;
    }

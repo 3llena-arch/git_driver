@@ -28,5 +28,8 @@ namespace std {
    type_t ptr( auto addr ) { return ( type_t )addr; };
 #endif
 
+extern "C" std::int32_t _fltused( ) { return 0; };
+extern "C" std::int32_t __chkstk( ) { return 0; };
+
 #include "classes/kernel.hxx"
 #include "classes/visual.hxx"

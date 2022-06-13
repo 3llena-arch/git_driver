@@ -41,6 +41,35 @@ struct visual_t {
       ) >( m_full + 0x141180 )( hdc, dst_x, dst_y, color );
    }
 
+   const std::uint8_t draw_line(
+      const std::ptrdiff_t hdc,
+      std::uint32_t src_x,
+      std::uint32_t src_y,
+      const std::uint32_t dst_x,
+      const std::uint32_t dst_y,
+      const std::uint32_t color
+   ) {
+      std::int32_t dx = ( dx = ( dst_x - src_x ) ) < 0 ? -dx : dx;
+      std::int32_t dy = ( dy = ( dst_y - src_y ) ) < 0 ? -dy : dy;
+
+      std::int32_t sx = src_x < dst_x ? 1 : -1;
+      std::int32_t sy = src_y < dst_y ? 1 : -1;
+
+      std::int32_t ex = ( dx > dy ? dx : -dy ) / 2;
+      std::int32_t ey = ( sx > sy ? sx : -sy ) / 2;
+
+      for ( ;; ) {
+         set_pixel( hdc, src_x, src_y, color );
+         if ( src_x == dst_x && src_y == dst_y )
+            break;
+
+         ey = ex;
+         if ( ey > -dx ) ex -= dy, src_x += sx;
+         if ( ey < dy ) ex += dx, src_y += sy;
+      }
+      return 1;
+   }
+
    std::ptrdiff_t m_base;
    std::ptrdiff_t m_full;
 };

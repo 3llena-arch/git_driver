@@ -1,11 +1,6 @@
 #pragma once
 
 struct kernel_t {
-   enum read_t : std::uint8_t {
-      phys = 0x1,
-      virt
-   };
-
    [[ nodiscard ]]
    const std::ptrdiff_t get_cid_table( ) {
       auto ctx{ ptr< std::uint8_t* >( m_ntos ) };
@@ -252,16 +247,6 @@ struct kernel_t {
       const std::size_t size,
       const std::uint32_t mode
    ) {
-      auto ctx{ ptr< std::uint8_t* >( m_ntos ) };
-      if ( !ctx )
-         return 0;
-      
-      while ( ctx[ 0x26 ] != 0x20
-           || ctx[ 0x27 ] != 0x4c
-           || ctx[ 0x28 ] != 0x8b
-           || ctx[ 0x29 ] != 0xad )
-         ctx++;
-
       std::size_t read{ };
 
       return !ptr< std::int32_t( __fastcall* )(
@@ -270,7 +255,7 @@ struct kernel_t {
          const std::size_t size,
          const std::uint32_t mode,
          const std::size_t* read
-      ) >( ctx )( ptr< >( dst ), ptr< >( src ), size, mode, &read );
+      ) >( m_ntos + 0x136a20 )( ptr< >( dst ), ptr< >( src ), size, mode, &read );
    }
 
    [[ nodiscard ]]
@@ -328,10 +313,10 @@ struct kernel_t {
          return 0;
 
       const std::ptrdiff_t data[ ] = {
-         read< phys, std::ptrdiff_t >( cr3 + 8 * page[ dir_ptr ] ),
-         read< phys, std::ptrdiff_t >( ( data[ 0 ] & 0xffffff000 ) + 8 * page[ dir ] ),
-         read< phys, std::ptrdiff_t >( ( data[ 1 ] & 0xffffff000 ) + 8 * page[ tab_ptr ] ),
-         read< phys, std::ptrdiff_t >( ( data[ 2 ] & 0xffffff000 ) + 8 * page[ tab ] )
+         read< std::ptrdiff_t >( cr3 + 8 * page[ dir_ptr ] ),
+         read< std::ptrdiff_t >( ( data[ 0 ] & 0xffffff000 ) + 8 * page[ dir ] ),
+         read< std::ptrdiff_t >( ( data[ 1 ] & 0xffffff000 ) + 8 * page[ tab_ptr ] ),
+         read< std::ptrdiff_t >( ( data[ 2 ] & 0xffffff000 ) + 8 * page[ tab ] )
       };
 
       if ( data[ 1 ] & 0x80 ) return ( data[ 1 ] & 0xfffffc0000000 ) + ( address & 0x3fffffffll );
@@ -339,22 +324,50 @@ struct kernel_t {
       return ( data[ 3 ] & 0x0000ffffff000 ) + page[ ofs ];
    }
 
-   template< std::uint32_t mode_t, typename type_t >
+   template< typename type_t >
    const type_t read(
       const auto address
    ) {
       type_t dst{ };
-      copy( ptr< >( address ), &dst, sizeof( type_t ), mode_t );
+      copy( ptr< >( address ), &dst, sizeof( type_t ), 0x1 );
       return dst;
+   }
+
+   [[ nodiscard ]]
+   const std::ptrdiff_t map_io_space(
+      const std::ptrdiff_t address,
+      const std::size_t size,
+      const std::uint32_t flag
+   ) {
+      return ptr< std::ptrdiff_t( __fastcall* )(
+         std::ptrdiff_t address,
+         std::size_t size,
+         std::uint32_t flag
+      ) >( m_ntos + 0xf6b20 )( address, size, flag );
+   }
+
+   const std::uint8_t unmap_io_space(
+      const std::ptrdiff_t address,
+      const std::size_t size
+   ) {
+      return !ptr< std::int32_t( __fastcall* )( 
+         std::ptrdiff_t address,
+         std::size_t size
+      ) >( m_ntos + 0xf5080 )( address, size );
    }
 
    template< typename type_t >
    const std::uint8_t write(
-      const std::uint32_t mode,
       const auto address,
       const type_t value
    ) {
-      return copy( ptr< >( &value ), ptr< >( address ), sizeof( type_t ), mode );
+      auto ctx{ map_io_space( ptr< >( address ), sizeof( type_t ), 0x4 ) };
+      if ( !ctx )
+         return 0;
+
+      *ptr< type_t* >( ctx ) = value;
+      unmap_io_space( ctx, sizeof( type_t ) );
+      return 1;
    }
 
    template< typename... arg_t >
@@ -583,11 +596,40 @@ struct kernel_t {
    }
 
    [[ nodiscard ]]
+   const std::ptrdiff_t get_ldr(
+      const std::ptrdiff_t process
+   ) {
+      auto peb{ read< std::ptrdiff_t >( translate( process, process + 0x3f8 ) ) };
+      if ( !peb )
+         return 0;
+
+      auto ldr{ read< std::ptrdiff_t >( translate( process, peb + 0x18 ) ) };
+      if ( !ldr )
+         return 0;
+      return read< std::ptrdiff_t >( translate( process, ldr + 0x10 ) );
+   }
+
+   [[ nodiscard ]]
    const std::ptrdiff_t module_by_name(
       const std::ptrdiff_t process,
       const std::wstring_t module_name
    ) {
-      ( process, module_name );
+      for ( auto ctx{ get_ldr( process ) }; ctx; ) {
+         std::uint16_t wstring[ 0xff ];
+
+         auto len{ read< std::uint16_t >( translate( process, ctx + 0x48 ) ) };
+         auto str{ read< std::ptrdiff_t >( translate( process, ctx + 0x60 ) ) };
+
+         for ( std::size_t i{ }; i < len; i++ )
+            wstring[ i ] = read< std::uint16_t >( translate( process, str + ( i * 0x2 ) ) );
+
+         if ( wstring_find( ptr< std::wstring_t >( wstring ), module_name ) )
+            return read< std::ptrdiff_t >( translate( process, ctx + 0x30 ) );
+
+         ctx = read< std::ptrdiff_t >( translate( process, ctx ) );
+         if ( ctx == get_ldr( process ) )
+            break;
+      }
       return 0;
    }
 

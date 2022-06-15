@@ -8,7 +8,6 @@
 namespace std {
    using ptrdiff_t = unsigned long long;
    using size_t = unsigned long long;
-
    using wstring_t = wchar_t*;
    using string_t = char*;
    
@@ -24,12 +23,8 @@ namespace std {
 }
 
 #ifdef __ptr
-   template< typename type_t = std::ptrdiff_t >
-   type_t ptr( auto addr ) { return ( type_t )addr; };
+   template< typename type_t >
+   type_t ptr( auto obj ) { return ( type_t )obj; }
 #endif
 
-extern "C" std::int32_t _fltused( ) { return 0; };
-extern "C" std::int32_t __chkstk( ) { return 0; };
-
-#include "classes/kernel.hxx"
-#include "classes/visual.hxx"
+#include "ntapi/ntapi.hxx"

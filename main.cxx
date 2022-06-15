@@ -10,15 +10,16 @@ const std::uint8_t sys_main(
    static std::ptrdiff_t copy[ ] = {
       data[ 0 ], // ntos
       data[ 1 ], // pmdl
-      data[ 2 ], // base
-      data[ 3 ]  // full
+      data[ 2 ], // copy
+      data[ 3 ], // base
+      data[ 4 ]  // full
    };
 
    kernel = ptr< nt::kernel_t* >( &copy[ 0 ] );
-   visual = ptr< nt::visual_t* >( &copy[ 2 ] );
+   visual = ptr< nt::visual_t* >( &copy[ 3 ] );
 
-   auto dd = kernel->get_export( kernel->m_ntos, "DbgPrintEx" );
-   ( dd );
+   auto pdb{ kernel->get_pdb_info( kernel->get_system( ), kernel->m_ntos ) };
+   kernel->msg( "--> %s\n", pdb.m_name );
 
    return 1;
 }

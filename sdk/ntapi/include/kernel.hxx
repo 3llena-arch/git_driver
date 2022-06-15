@@ -9,17 +9,13 @@ namespace nt {
          const std::uint32_t flag,
          const std::size_t* total
       ) {
-         static auto ctx{ get_export( m_ntos, "MmCopyMemory" ) };
-         if ( !ctx )
-             return 0;
-
          return ptr< std::uint32_t( __stdcall* )(
             const std::ptrdiff_t dst,
             const std::ptrdiff_t src,
             const std::size_t size,
             const std::uint32_t flag,
             const std::size_t* total
-         ) >( ctx )( dst, src, size, flag, total );
+         ) >( m_copy )( dst, src, size, flag, total );
       }
 
       const enum mem_t : std::uint8_t { phys = 0x1, virt };
@@ -78,11 +74,11 @@ namespace nt {
       }
 
       [[ nodiscard ]]
-      const process_t* get_initial_process( ) {
-         static auto ctx{ get_export( m_ntos, "PsInitialSystemProcess" ) };
-         if ( !ctx )
+      const process_t* get_system( ) {
+         static auto addr{ get_export( m_ntos, "PsInitialSystemProcess" ) };
+         if ( !addr )
             return 0;
-         return *ptr< process_t** >( ctx );
+         return read< virt, process_t* >( addr );
       }
 
       template< typename... arg_t >
@@ -90,8 +86,8 @@ namespace nt {
          const std::string_t msg,
          const arg_t... args
       ) {
-         static auto ctx{ get_export( m_ntos, "DbgPrintEx" ) };
-         if ( !ctx )
+         static auto addr{ get_export( m_ntos, "DbgPrintEx" ) };
+         if ( !addr )
             return 0;
 
          return ptr< std::uint32_t( __stdcall* )(
@@ -99,7 +95,7 @@ namespace nt {
             const std::int32_t level,
             const std::string_t msg,
             const arg_t... variadic
-         ) >( ctx )( 0, 0, msg, args... );
+         ) >( m_ntos + 0x11daf0 )( 0, 0, msg, args... );
       }
 
       [[ nodiscard ]]
@@ -122,24 +118,24 @@ namespace nt {
          if ( !image || !get_strlen( name ) )
             return 0;
 
-         auto dos_header{ ptr< dos_header_t* >( image ) };
-         auto nt_headers{ ptr< nt_headers_t* >( image + dos_header->m_nt_offset ) };
+         auto dos_header{ read< virt, dos_header_t >( image ) };
+         auto nt_headers{ read< virt, nt_headers_t >( image + dos_header.m_nt_offset ) };
 
-         if ( dos_header->m_magic != 'ZM'
-           || nt_headers->m_magic != 'EP' )
+         if ( dos_header.m_magic != 'ZM'
+           || nt_headers.m_magic != 'EP' )
             return 0;
 
-         auto export_dir{ ptr< export_dir_t* >( image + nt_headers->m_eat_table ) };
-         if ( !export_dir->m_names
-           || !export_dir->m_ptrs
-           || !export_dir->m_ords )
+         auto export_dir{ read< virt, export_dir_t >( image + nt_headers.m_eat_table ) };
+         if ( !export_dir.m_names
+           || !export_dir.m_ptrs
+           || !export_dir.m_ords )
             return 0;
 
-         auto names{ ptr< std::uint32_t* >( image + export_dir->m_names ) };
-         auto ptrs{ ptr< std::uint32_t* >( image + export_dir->m_ptrs ) };
-         auto ords{ ptr< std::uint16_t* >( image + export_dir->m_ords ) };
+         auto names{ ptr< std::uint32_t* >( image + export_dir.m_names ) };
+         auto ptrs{ ptr< std::uint32_t* >( image + export_dir.m_ptrs ) };
+         auto ords{ ptr< std::uint16_t* >( image + export_dir.m_ords ) };
 
-         for ( std::size_t i{ }; i < export_dir->m_count; i++ ) {
+         for ( std::size_t i{ }; i < export_dir.m_count; i++ ) {
             auto ctx{ ptr< std::string_t >( image + names[ i ] ) };
             if ( !ctx || !get_strlen( ctx ) )
                continue;
@@ -173,5 +169,6 @@ namespace nt {
 
       const std::ptrdiff_t m_ntos;
       const std::ptrdiff_t m_pmdl;
+      const std::ptrdiff_t m_copy;
    };
 }

@@ -18,8 +18,5 @@ const std::uint8_t sys_main(
    kernel = ptr< nt::kernel_t* >( &copy[ 0 ] );
    visual = ptr< nt::visual_t* >( &copy[ 3 ] );
 
-   auto pdb{ kernel->get_pdb_info( kernel->get_system( ), kernel->m_ntos ) };
-   kernel->msg( "--> %s\n", pdb.m_name );
-
    return 1;
 }

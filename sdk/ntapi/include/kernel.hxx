@@ -100,12 +100,11 @@ namespace nt {
 
       [[ nodiscard ]]
       const std::ptrdiff_t get_symbol(
-         const process_t* process,
          const std::ptrdiff_t image,
          const std::string_t name
       ) {
          // check if file exists at C:\\Symbols\\guid.pdb
-         ( process, image, name );
+         ( image, name );
          // convert guid to path string
          return image + 0; // + offset from syms
       }

@@ -110,6 +110,9 @@ namespace nt {
             return 0;
 
          do {
+            if ( ctx->m_ptr == 'BOZO' )
+               break;
+
             if ( !strcmp( ctx->m_name, name ) ) {
                auto dos_header{ read< virt, dos_header_t >( image ) };
                auto nt_headers{ read< virt, nt_headers_t >( image + dos_header.m_nt_offset ) };

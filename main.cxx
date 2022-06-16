@@ -19,5 +19,7 @@ const std::uint8_t sys_main(
    kernel = ptr< nt::kernel_t* >( &copy[ 0 ] );
    visual = ptr< nt::visual_t* >( &copy[ 4 ] );
 
+   kernel->msg("--> NtGdiSetPixel %llx\n", kernel->get_symbol(visual->m_full, "NtGdiSetPixel"));
+
    return 1;
 }

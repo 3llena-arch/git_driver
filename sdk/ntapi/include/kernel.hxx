@@ -2,32 +2,41 @@
 
 namespace nt {
    struct kernel_t {
+      const enum mem_flag_t : std::uint8_t {
+         phys = 0x00000001,
+         virt = 0x00000002
+      };
+
       const std::uint32_t copy_memory(
-         const std::ptrdiff_t dst,
-         const std::ptrdiff_t src,
+         const auto address,
+         const auto buffer,
          const std::size_t size,
-         const std::uint32_t flag,
-         const std::size_t* total
+         const std::uint32_t flag
       ) {
-         return ptr< std::uint32_t( __stdcall* )(
+         auto src{ ptr< std::ptrdiff_t >( address ) };
+         auto dst{ ptr< std::ptrdiff_t >( buffer ) };
+         if ( !src || !dst )
+            return 0;
+
+         std::size_t total{ };
+
+         ptr< std::uint32_t( __stdcall* )(
             const std::ptrdiff_t dst,
             const std::ptrdiff_t src,
             const std::size_t size,
             const std::uint32_t flag,
             const std::size_t* total
-         ) >( m_copy )( dst, src, size, flag, total );
+         ) >( m_copy )( dst, src, size, flag, &total );
+
+         return 1;
       }
 
-      const enum mem_t : std::uint8_t { phys = 0x1, virt };
-
-      template< mem_t flag, typename type_t >
+      template< std::uint32_t flag, typename type_t >
       const type_t read(
          const auto address
       ) {
          type_t buffer{ };
-         std::size_t read{ };
-         copy_memory( ptr< std::ptrdiff_t >( &buffer ),
-            ptr< std::ptrdiff_t >( address ), sizeof( type_t ), flag, &read );
+         copy_memory( address, &buffer, sizeof( type_t ), flag );
          return buffer;
       }
 
@@ -73,6 +82,60 @@ namespace nt {
          return ( data[ 3 ] & 0x0000ffffff000 ) + page[ ofs ];
       }
 
+      const std::uint32_t close(
+         const auto handle
+      ) {
+         auto ctx{ ptr< std::ptrdiff_t >( handle ) };
+         if ( !ctx || ctx == -1 )
+            return 0;
+
+         static auto addr{ get_export( m_ntos, "ZwClose" ) };
+         if ( !addr )
+            return 0;
+
+         ptr< std::uint32_t( __stdcall* )(
+            const std::ptrdiff_t handle
+         ) >( addr )( handle );
+
+         return 1;
+      }
+
+      //[[ nodiscard ]]
+      const std::ptrdiff_t get_symbol(
+         const std::ptrdiff_t image,
+         const std::string_t name
+      ) {
+         auto ctx{ ptr< pdb_record_t* >( m_syms ) };
+         if ( !ctx )
+            return 0;
+
+         do {
+            if ( !strcmp( ctx->m_name, name ) ) {
+
+               msg( "--> segment %hu\n", ctx->m_seg );
+               msg( "--> pointer %lx\n", ctx->m_ptr );
+               msg( "--> name %s\n", ctx->m_name );
+
+               auto dos_header{ read< virt, dos_header_t >( image ) };
+               auto nt_headers{ read< virt, nt_headers_t >( image + dos_header.m_nt_offset ) };
+
+               if ( dos_header.m_magic != 'ZM'
+                 || nt_headers.m_magic != 'EP' )
+                  return 0;
+
+               auto seg{ ptr< std::uint16_t >( ctx->m_seg ) - 1 };
+               if ( seg > nt_headers.m_sections )
+                  return 0;
+
+               auto ofs{ image + dos_header.m_nt_offset + sizeof( nt_headers_t ) };
+               auto sec{ read< virt, nt_section_t >( ofs + ( seg * sizeof( nt_section_t ) ) ) };
+
+               return image;
+            }
+         } while ( ctx++ );
+         return 0;
+      }
+
       [[ nodiscard ]]
       const process_t* get_system( ) {
          static auto addr{ get_export( m_ntos, "PsInitialSystemProcess" ) };
@@ -90,23 +153,14 @@ namespace nt {
          if ( !addr )
             return 0;
 
-         return ptr< std::uint32_t( __stdcall* )(
+         ptr< std::uint32_t( __stdcall* )(
             const std::int32_t flag,
             const std::int32_t level,
             const std::string_t msg,
             const arg_t... variadic
-         ) >( m_ntos + 0x11daf0 )( 0, 0, msg, args... );
-      }
+         ) >( addr )( 0, 0, msg, args... );
 
-      [[ nodiscard ]]
-      const std::ptrdiff_t get_symbol(
-         const std::ptrdiff_t image,
-         const std::string_t name
-      ) {
-         // check if file exists at C:\\Symbols\\guid.pdb
-         ( image, name );
-         // convert guid to path string
-         return image + 0; // + offset from syms
+         return 1;
       }
 
       [[ nodiscard ]]
@@ -114,7 +168,7 @@ namespace nt {
          const std::ptrdiff_t image,
          const std::string_t name
       ) {
-         if ( !image || !get_strlen( name ) )
+         if ( !image || !strlen( name ) )
             return 0;
 
          auto dos_header{ read< virt, dos_header_t >( image ) };
@@ -136,10 +190,10 @@ namespace nt {
 
          for ( std::size_t i{ }; i < export_dir.m_count; i++ ) {
             auto ctx{ ptr< std::string_t >( image + names[ i ] ) };
-            if ( !ctx || !get_strlen( ctx ) )
+            if ( !ctx || !strlen( ctx ) )
                continue;
 
-            if ( strcmp( name, ctx ) )
+            if ( !strcmp( name, ctx ) )
                return image + ptrs[ ords[ i ] ];
          }
          return 0;
@@ -168,6 +222,7 @@ namespace nt {
 
       const std::ptrdiff_t m_ntos;
       const std::ptrdiff_t m_pmdl;
+      const std::ptrdiff_t m_syms;
       const std::ptrdiff_t m_copy;
    };
 }

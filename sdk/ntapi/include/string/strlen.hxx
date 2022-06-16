@@ -2,7 +2,7 @@
 
 namespace nt {
    [[ nodiscard ]]
-   const std::size_t get_strlen(
+   const std::size_t strlen(
       const std::string_t string
    ) {
       std::size_t size{ };

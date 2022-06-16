@@ -2,7 +2,7 @@
 
 namespace nt {
    [[ nodiscard ]]
-   const std::size_t get_wstrlen(
+   const std::size_t wcslen(
       const std::wstring_t string
    ) {
       std::size_t size{ };

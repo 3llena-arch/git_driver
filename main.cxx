@@ -10,13 +10,14 @@ const std::uint8_t sys_main(
    static std::ptrdiff_t copy[ ] = {
       data[ 0 ], // ntos
       data[ 1 ], // pmdl
-      data[ 2 ], // copy
-      data[ 3 ], // base
-      data[ 4 ]  // full
+      data[ 2 ], // syms
+      data[ 3 ], // copy
+      data[ 4 ], // base
+      data[ 5 ]  // full
    };
 
    kernel = ptr< nt::kernel_t* >( &copy[ 0 ] );
-   visual = ptr< nt::visual_t* >( &copy[ 3 ] );
+   visual = ptr< nt::visual_t* >( &copy[ 4 ] );
 
    return 1;
 }

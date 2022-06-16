@@ -100,7 +100,7 @@ namespace nt {
          return 1;
       }
 
-      //[[ nodiscard ]]
+      [[ nodiscard ]]
       const std::ptrdiff_t get_symbol(
          const std::ptrdiff_t image,
          const std::string_t name
@@ -111,11 +111,6 @@ namespace nt {
 
          do {
             if ( !strcmp( ctx->m_name, name ) ) {
-
-               msg( "--> segment %hu\n", ctx->m_seg );
-               msg( "--> pointer %lx\n", ctx->m_ptr );
-               msg( "--> name %s\n", ctx->m_name );
-
                auto dos_header{ read< virt, dos_header_t >( image ) };
                auto nt_headers{ read< virt, nt_headers_t >( image + dos_header.m_nt_offset ) };
 
@@ -130,7 +125,10 @@ namespace nt {
                auto ofs{ image + dos_header.m_nt_offset + sizeof( nt_headers_t ) };
                auto sec{ read< virt, nt_section_t >( ofs + ( seg * sizeof( nt_section_t ) ) ) };
 
-               return image;
+               if ( !ofs || !sec.m_ptr )
+                  return 0;
+
+               return image + sec.m_ptr + ctx->m_ptr;
             }
          } while ( ctx++ );
          return 0;

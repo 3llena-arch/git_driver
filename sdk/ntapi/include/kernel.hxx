@@ -100,14 +100,50 @@ namespace nt {
          if ( !addr )
             return 0;
 
-         ptr< std::uint32_t( __stdcall* )(
+         return !ptr< std::uint32_t( __stdcall* )(
             const std::int32_t flag,
             const std::int32_t level,
             const std::string_t msg,
             const arg_t... variadic
          ) >( addr )( 0, 0, msg, args... );
+      }
 
-         return 1;
+      const std::uint8_t close(
+         const std::ptrdiff_t handle
+      ) {
+         static auto addr{ get_export( m_ntos, "ZwClose" ) };
+         if ( !addr )
+            return 0;
+
+         return !ptr< std::int32_t( __stdcall* )(
+            const std::ptrdiff_t handle ) >( addr )( handle );
+      }
+
+      [[ nodiscard ]]
+      const std::ptrdiff_t new_thread(
+         const auto callback
+      ) {
+         static auto addr{ get_export( m_ntos, "PsCreateSystemThreadEx" ) };
+         static auto call{ ptr< std::ptrdiff_t >( callback ) };
+
+         if ( !addr || !call )
+            return 0;
+
+         std::ptrdiff_t handle{ };
+
+         ptr< std::int32_t( __stdcall* )(
+            std::ptrdiff_t* thread,
+            std::int32_t access,
+            std::ptrdiff_t attributes,
+            std::ptrdiff_t process,
+            std::ptrdiff_t client,
+            std::ptrdiff_t routine,
+            std::ptrdiff_t context,
+            std::ptrdiff_t unused,
+            std::ptrdiff_t reserved
+         ) >( addr )( &handle, 0, 0, 0, 0, call, 0, 0, 0 );
+
+         return handle;
       }
 
       [[ nodiscard ]]
@@ -134,9 +170,13 @@ namespace nt {
          for ( std::size_t i{ }; i < export_dir->m_count; i++ )
             if ( !strcmp( symbol, ptr< std::string_t >( image + name[ i ] ) ) )
                return image + ptrs[ ords[ i ] ];
+
+         return 0;
       }
 
       const std::ptrdiff_t m_ntos;
       const std::ptrdiff_t m_pmdl;
    };
 }
+
+extern nt::kernel_t* kernel;

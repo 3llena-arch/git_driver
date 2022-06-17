@@ -6,3 +6,5 @@ namespace nt {
       const std::ptrdiff_t m_full;
    };
 }
+
+extern nt::visual_t* visual;

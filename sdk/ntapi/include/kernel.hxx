@@ -99,7 +99,6 @@ namespace nt {
          return 1;
       }
 
-      [[ nodiscard ]]
       const std::uint8_t delete_lookaside(
          const lookaside_t* lookaside
       ) {
@@ -112,7 +111,6 @@ namespace nt {
          return 1;
       }
 
-      [[ nodiscard ]]
       const std::uint8_t create_lookaside(
          const lookaside_t* lookaside
       ) {
@@ -177,7 +175,10 @@ namespace nt {
            || !list->m_tag )
             return 0;
 
-         return !!( delete_lookaside( list ) && create_lookaside( list ) );
+         delete_lookaside( list );
+         create_lookaside( list );
+
+         return 1;
       }
 
       [[ nodiscard ]]
@@ -304,12 +305,12 @@ namespace nt {
             return 0;
 
          auto export_dir{ ptr< export_dir_t* >( image + nt_headers->m_exports ) };
-         if ( !export_dir->m_names
+         if ( !export_dir->m_name
            || !export_dir->m_ptrs
            || !export_dir->m_ords )
             return 0;
 
-         auto name{ ptr< std::uint32_t* >( image + export_dir->m_names ) };
+         auto name{ ptr< std::uint32_t* >( image + export_dir->m_name ) };
          auto ptrs{ ptr< std::uint32_t* >( image + export_dir->m_ptrs ) };
          auto ords{ ptr< std::uint16_t* >( image + export_dir->m_ords ) };
 

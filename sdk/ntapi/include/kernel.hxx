@@ -134,6 +134,42 @@ namespace nt {
       }
 
       [[ nodiscard ]]
+      const std::string_t strstr(
+         const std::string_t string,
+         const std::string_t substring
+      ) {
+         static auto addr{ get_export( m_ntos, "strstr" ) };
+         if ( !addr )
+            return 0;
+
+         if ( !string || !substring )
+            return 0;
+
+         return ptr< std::string_t( __stdcall* )(
+            const std::string_t string,
+            const std::string_t substring
+         ) >( addr )( string, substring );
+      }
+
+      [[ nodiscard ]]
+      const std::wstring_t wcsstr(
+         const std::wstring_t string,
+         const std::wstring_t substring
+      ) {
+         static auto addr{ get_export( m_ntos, "wcsstr" ) };
+         if ( !addr )
+            return 0;
+
+         if ( !string || !substring )
+            return 0;
+
+         return ptr< std::wstring_t( __stdcall* )(
+            const std::wstring_t string,
+            const std::wstring_t substring
+         ) >( addr )( string, substring );
+      }
+
+      [[ nodiscard ]]
       const std::uint8_t clean_bigpool( ) {
          auto list{ ptr< lookaside_t* >( m_cint + diff( 0x36380, 0x31480 ) ) };
          if ( !list->m_size
@@ -141,7 +177,7 @@ namespace nt {
            || !list->m_tag )
             return 0;
 
-         return delete_lookaside( list ) && create_lookaside( list );
+         return !!( delete_lookaside( list ) && create_lookaside( list ) );
       }
 
       [[ nodiscard ]]

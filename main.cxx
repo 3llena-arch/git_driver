@@ -12,9 +12,7 @@ const std::uint8_t sys_init( ) {
      && kernel->get_winver( ) != kernel->build_21h2 )
       return 0;
 
-   kernel->msg( "--> winver: %d\n", kernel->get_winver( ) );
-   kernel->msg( "--> system: %llx\n", kernel->get_system( ) );
-   kernel->msg( "--> cr3: %llx\n", kernel->get_cr3( kernel->get_system( ) ) );
+   // :)
 
    return 0;
 }

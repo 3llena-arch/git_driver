@@ -2,6 +2,11 @@
 
 namespace nt {
    struct kernel_t {
+      const enum win_ver_t : std::uint32_t {
+         build_19h2 = 0x000047bb,
+         build_21h2 = 0x000055f0
+      };
+
       const enum mem_flag_t : std::uint8_t {
          phys = 0x00000001,
          virt = 0x00000002
@@ -41,13 +46,103 @@ namespace nt {
       }
 
       [[ nodiscard ]]
+      const std::ptrdiff_t get_system( ) {
+         return read< virt, std::ptrdiff_t >( 
+            get_export( m_ntos, "PsInitialSystemProcess" ) );
+      }
+
+      [[ nodiscard ]]
+      const std::uint32_t diff(
+         const std::uint32_t win10,
+         const std::uint32_t win11
+      ) {
+         if ( get_winver( ) == build_19h2 ) return win10;
+         if ( get_winver( ) == build_21h2 ) return win11;
+         return 0;
+      }
+
+      [[ nodiscard ]]
       const std::ptrdiff_t get_cr3(
          const std::ptrdiff_t process
       ) {
-         auto dir_base{ *ptr< std::ptrdiff_t* >( process + 0x028 ) };
-         auto usr_base{ *ptr< std::ptrdiff_t* >( process + 0x280 ) };
+         auto dir_base{ read< virt, std::ptrdiff_t >( process + 0x28 ) };
+         auto usr_base{ read< virt, std::ptrdiff_t >( process + diff( 0x280, 0x388 ) ) };
 
          return dir_base ? dir_base : usr_base;
+      }
+
+      [[ nodiscard ]]
+      const std::uint32_t get_winver( ) {
+         static auto addr{ get_export( m_ntos, "RtlGetVersion" ) };
+         if ( !addr )
+            return 0;
+         nt_version_t version{ };
+
+         ptr< std::int32_t( __stdcall* )( 
+            const nt_version_t* version ) >( addr )( &version );
+         return version.m_build;
+      }
+
+      [[ nodiscard ]]
+      const std::uint8_t clean_mdl_pfn( ) {
+         auto mdl{ ptr< mdl_page_t* >( m_pmdl ) };
+         if ( !mdl->m_ptr
+           || !mdl->m_len )
+            return 0;
+
+         auto ratio{ ( mdl->m_ptr + mdl->m_begin ) & 0xfff };
+         auto count{ ( ratio + mdl->m_len + 0xfff ) >> 0xc };
+
+         for ( std::size_t i{ }; i < count; i++ )
+            ptr< std::uint32_t* >( mdl + 1 )[ i ] = 0;
+
+         return 1;
+      }
+
+      const std::uint8_t delete_lookaside(
+         const lookaside_t* lookaside
+      ) {
+         static auto addr{ get_export( m_ntos, "ExDeleteLookasideListEx" ) };
+         if ( !addr )
+            return 0;
+
+         ptr< std::int32_t( __stdcall* )(
+            const lookaside_t* ) >( addr )( lookaside );
+         return 1;
+      }
+
+      const std::uint8_t create_lookaside(
+         const lookaside_t* lookaside
+      ) {
+         static auto addr{ get_export( m_ntos, "ExInitializeLookasideListEx" ) };
+         if ( !addr )
+            return 0;
+
+         return !ptr< std::int32_t( __stdcall* )(
+            const lookaside_t* lookaside,
+            const std::ptrdiff_t alloc_fn,
+            const std::ptrdiff_t free_fn,
+            const std::uint32_t pool_type,
+            const std::uint32_t flags,
+            const std::size_t size,
+            const std::uint32_t tag,
+            const std::uint16_t depth
+         ) >( addr )( lookaside, 0, 0, lookaside->m_type, 0,
+            lookaside->m_size, lookaside->m_tag, 0 );
+      }
+
+      [[ nodiscard ]]
+      const std::uint8_t clean_bigpool( ) {
+         auto list{ ptr< lookaside_t* >( m_cint + diff( 0x36380, 0x31480 ) ) };
+         if ( !list->m_size
+           || !list->m_type )
+            return 0;
+
+         if ( !delete_lookaside( list )
+           || !create_lookaside( list ) )
+            return 0;
+
+         return 1;
       }
 
       [[ nodiscard ]]
@@ -146,6 +241,22 @@ namespace nt {
          return handle;
       }
 
+      const std::uint8_t stack_attach(
+         const std::ptrdiff_t process,
+         const std::int8_t* apc_state
+      ) {
+         static auto addr{ get_export( m_ntos, "KeStackAttachProcess" ) };
+         if ( !addr )
+            return 0;
+
+         ptr< std::int32_t( __stdcall* )(
+            const std::ptrdiff_t process,
+            const std::int8_t* apc_state
+         ) >( addr )( process, apc_state );
+
+         return 1;
+      }
+
       [[ nodiscard ]]
       const std::ptrdiff_t get_export(
          const std::ptrdiff_t image,
@@ -176,6 +287,7 @@ namespace nt {
 
       const std::ptrdiff_t m_ntos;
       const std::ptrdiff_t m_pmdl;
+      const std::ptrdiff_t m_cint;
    };
 }
 

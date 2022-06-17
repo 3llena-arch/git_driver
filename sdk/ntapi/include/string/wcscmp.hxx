@@ -9,10 +9,7 @@ namespace nt {
       auto src{ ptr< std::wstring_t >( string ) };
       auto dst{ ptr< std::wstring_t >( substring ) };
 
-      while ( *src && *src == *dst )
-         src++, dst++;
-
-      return ptr< std::int32_t >( *src )
-           - ptr< std::int32_t >( *dst );
+      while ( *src && *src == *dst ) src++, dst++;
+      return *src - *dst;
    }
 }

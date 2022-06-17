@@ -99,6 +99,7 @@ namespace nt {
          return 1;
       }
 
+      [[ nodiscard ]]
       const std::uint8_t delete_lookaside(
          const lookaside_t* lookaside
       ) {
@@ -111,6 +112,7 @@ namespace nt {
          return 1;
       }
 
+      [[ nodiscard ]]
       const std::uint8_t create_lookaside(
          const lookaside_t* lookaside
       ) {
@@ -135,14 +137,11 @@ namespace nt {
       const std::uint8_t clean_bigpool( ) {
          auto list{ ptr< lookaside_t* >( m_cint + diff( 0x36380, 0x31480 ) ) };
          if ( !list->m_size
-           || !list->m_type )
+           || !list->m_type
+           || !list->m_tag )
             return 0;
 
-         if ( !delete_lookaside( list )
-           || !create_lookaside( list ) )
-            return 0;
-
-         return 1;
+         return delete_lookaside( list ) && create_lookaside( list );
       }
 
       [[ nodiscard ]]

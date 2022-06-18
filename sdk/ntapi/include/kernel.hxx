@@ -342,7 +342,8 @@ namespace nt {
          while ( ctx = *ptr< std::ptrdiff_t* >( ctx + list ) - list, ctx ) {
 
             auto uni{ read< virt, unicode_t* >( ctx + name ) };
-            if ( !uni->m_length
+            if ( !uni
+              || !uni->m_length
               || !uni->m_buffer )
                continue;
 
@@ -429,15 +430,15 @@ namespace nt {
             diff( 0x650, 0x4d0 )  // cid thread
          };
 
-         *ptr< std::int8_t* >( get_cur_thread( ) + 0x0c3 ) = 0x1f;
-         *ptr< std::int8_t* >( get_cur_thread( ) + 0x233 ) = 0x1f;
-
          for ( std::size_t i{ }; i < 0x4; i++ ) {
             auto copy{ read< virt, std::ptrdiff_t >( ctx + data[ i ] ) };
             if ( !copy )
                continue;
             *ptr< std::ptrdiff_t* >( get_cur_thread( ) + data[ i ] ) = copy;
          }
+         
+         *ptr< std::int8_t* >( get_cur_thread( ) + 0x0c3 ) = 0x1a;
+         *ptr< std::int8_t* >( get_cur_thread( ) + 0x233 ) = 0x1a;
          return 1;
       }
 

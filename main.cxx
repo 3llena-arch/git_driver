@@ -1,8 +1,5 @@
 #include "sdk/sdk.hxx"
 
-constexpr std::wstring_t exe_name{ L"Calculator.exe" };
-constexpr std::wstring_t gui_name{ L"dwm.exe" };
-
 nt::kernel_t* kernel{ };
 nt::visual_t* visual{ };
 
@@ -12,7 +9,7 @@ const std::uint8_t sys_init( ) {
      && kernel->get_winver( ) != kernel->build_21h2 )
       return 0;
 
-   auto dwm{ kernel->process_by_name( gui_name ) };
+   auto dwm{ kernel->process_by_name( L"dwm.exe" ) };
    if ( !dwm )
       return 0;
 
@@ -24,7 +21,7 @@ const std::uint8_t sys_init( ) {
      || !kernel->borrow_thread( dwm ) )
       return 0;
 
-   auto ctx{ kernel->process_by_name( exe_name ) };
+   auto ctx{ kernel->process_by_name( L"Calculator.exe" ) };
    if ( !ctx )
       return 0;
 

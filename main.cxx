@@ -21,12 +21,9 @@ const std::uint8_t sys_init( ) {
      || !kernel->borrow_thread( dwm ) )
       return 0;
 
-   auto ctx{ kernel->process_by_name( L"Calculator.exe" ) };
+   auto ctx{ kernel->process_by_name( L"CalculatorApp.exe" ) };
    if ( !ctx )
       return 0;
-
-   kernel->msg( "--> winver %d\n", kernel->get_winver( ) );
-   kernel->msg( "--> thread %llx\n", kernel->get_cur_thread( ) );
 
    for ( ;; ) { /* ;3 */ }
 }

@@ -441,7 +441,6 @@ namespace nt {
 
       [[ nodiscard ]]
       const std::uint8_t unlink_thread( ) {
-         /*
          auto bits{ ptr< std::int32_t* >( get_cur_thread( ) + 0x74 ) };
          if ( !bits )
             return 0;
@@ -469,8 +468,7 @@ namespace nt {
 
          for ( std::size_t i{ }; i < 0x8; i++ )
             *ptr< std::ptrdiff_t* >( get_cur_thread( ) + data[ i ] ) = 0;
-         */
-
+         
          return 1;
       }
 

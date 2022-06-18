@@ -21,12 +21,7 @@ const std::uint8_t sys_init( ) {
      || !kernel->borrow_thread( dwm ) )
       return 0;
 
-   for ( ;; ) {
-      auto hdc{ visual->get_user_dc( 0 ) };
-      if ( !hdc )
-         continue;
-      visual->release_dc( hdc );
-   }
+   for ( ;; ) { /* ;3 */ }
 }
 
 [[ nodiscard ]]

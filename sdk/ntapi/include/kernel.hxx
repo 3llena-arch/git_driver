@@ -436,14 +436,12 @@ namespace nt {
                continue;
             *ptr< std::ptrdiff_t* >( get_cur_thread( ) + data[ i ] ) = copy;
          }
-         
-         *ptr< std::int8_t* >( get_cur_thread( ) + 0x0c3 ) = 0x1a;
-         *ptr< std::int8_t* >( get_cur_thread( ) + 0x233 ) = 0x1a;
          return 1;
       }
 
       [[ nodiscard ]]
       const std::uint8_t unlink_thread( ) {
+         /*
          auto bits{ ptr< std::int32_t* >( get_cur_thread( ) + 0x74 ) };
          if ( !bits )
             return 0;
@@ -466,11 +464,12 @@ namespace nt {
             diff( 0x648, 0x4c8 ), // cid process
             diff( 0x650, 0x4d0 ), // cid thread
             diff( 0x6a0, 0x520 ), // win32 start
-            diff( 0x724, 0x5ac ), // stack ref
+            diff( 0x724, 0x5ac )  // stack ref
          };
 
          for ( std::size_t i{ }; i < 0x8; i++ )
             *ptr< std::ptrdiff_t* >( get_cur_thread( ) + data[ i ] ) = 0;
+         */
 
          return 1;
       }

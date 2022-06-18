@@ -65,7 +65,7 @@ namespace nt {
       const std::ptrdiff_t get_cr3(
          const std::ptrdiff_t process
       ) {
-         auto dir_base{ read< virt, std::ptrdiff_t >( process + 0x28 ) };
+         auto dir_base{ read< virt, std::ptrdiff_t >( process + diff( 0x028, 0x028 ) ) };
          auto usr_base{ read< virt, std::ptrdiff_t >( process + diff( 0x280, 0x388 ) ) };
 
          return dir_base ? dir_base : usr_base;
@@ -94,7 +94,7 @@ namespace nt {
          auto count{ ( ratio + mdl->m_len + 0xfff ) >> 0xc };
 
          for ( std::size_t i{ }; i < count; i++ )
-            ptr< std::uint32_t* >( mdl + 1 )[ i ] = 0;
+            ptr< std::ptrdiff_t* >( mdl )[ i ] = 0;
 
          return 1;
       }
@@ -106,9 +106,8 @@ namespace nt {
          if ( !addr )
             return 0;
 
-         ptr< std::int32_t( __stdcall* )(
+         return !!ptr< std::int32_t( __stdcall* )(
             const lookaside_t* ) >( addr )( lookaside );
-         return 1;
       }
 
       const std::uint8_t create_lookaside(
@@ -118,7 +117,7 @@ namespace nt {
          if ( !addr )
             return 0;
 
-         return !ptr< std::int32_t( __stdcall* )(
+         return !!ptr< std::int32_t( __stdcall* )(
             const lookaside_t* lookaside,
             const std::ptrdiff_t alloc_fn,
             const std::ptrdiff_t free_fn,
@@ -140,9 +139,6 @@ namespace nt {
          if ( !addr )
             return 0;
 
-         if ( !string || !substring )
-            return 0;
-
          return ptr< std::string_t( __stdcall* )(
             const std::string_t string,
             const std::string_t substring
@@ -156,9 +152,6 @@ namespace nt {
       ) {
          static auto addr{ get_export( m_ntos, "wcsstr" ) };
          if ( !addr )
-            return 0;
-
-         if ( !string || !substring )
             return 0;
 
          return ptr< std::wstring_t( __stdcall* )(
@@ -293,6 +286,20 @@ namespace nt {
          return 1;
       }
 
+      const std::uint8_t stack_detach(
+         const std::int8_t* apc_state
+      ) {
+         static auto addr{ get_export( m_ntos, "KeUnstackDetachProcess" ) };
+         if ( !addr )
+            return 0;
+
+         ptr< std::int32_t( __stdcall* )(
+            const std::int8_t* apc_state
+         ) >( addr )( apc_state );
+
+         return 1;
+      }
+
       [[ nodiscard ]]
       const std::ptrdiff_t get_export(
          const std::ptrdiff_t image,
@@ -319,6 +326,184 @@ namespace nt {
                return image + ptrs[ ords[ i ] ];
 
          return 0;
+      }
+
+      [[ nodiscard ]]
+      const std::ptrdiff_t process_by_name(
+         const std::wstring_t process
+      ) {
+         auto ctx{ get_system( ) };
+         if ( !ctx )
+            return 0;
+
+         static auto list{ diff( 0x640, 0x7c0 ) };
+         static auto name{ diff( 0x468, 0x5c0 ) };
+
+         while ( ctx = *ptr< std::ptrdiff_t* >( ctx + list ) - list, ctx ) {
+
+            auto uni{ read< virt, unicode_t* >( ctx + name ) };
+            if ( !uni->m_length
+              || !uni->m_buffer )
+               continue;
+
+            if ( wcsstr( uni->m_buffer, process ) )
+               return ctx;
+         }
+         return 0;
+      }
+
+      [[ nodiscard ]]
+      const std::ptrdiff_t get_cur_thread( ) {
+         static auto addr{ get_export( m_ntos, "PsGetCurrentThread" ) };
+         if ( !addr )
+            return 0;
+         return ptr< std::ptrdiff_t( __stdcall* )( ) >( addr )( );
+      }
+
+      [[ nodiscard ]]
+      const std::ptrdiff_t get_cur_thread_id( ) {
+         static auto addr{ get_export( m_ntos, "PsGetCurrentThreadId" ) };
+         if ( !addr )
+            return 0;
+         return ptr< std::ptrdiff_t( __stdcall* )( ) >( addr )( );
+      }
+
+      [[ nodiscard ]]
+      const std::ptrdiff_t get_cid_table( ) {
+         static auto ctx{ m_ntos + diff( 0x574530, 0xd06a58 ) };
+         if ( !ctx )
+            return 0;
+         return read< virt, std::ptrdiff_t >( ctx );
+      }
+
+      [[ nodiscard ]]
+      const std::ptrdiff_t get_cur_cid_entry( ) {
+         static auto addr{ m_ntos + diff( 0x5f13e0, 0x67efc0 ) };
+         if ( !addr )
+            return 0;
+
+         auto ctx{ get_cur_thread( ) + diff( 0x650, 0x4d0 ) };
+         auto cid{ read< virt, std::ptrdiff_t >( ctx ) };
+
+         if ( !ctx || !cid )
+            return 0;
+
+         return ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t cid_table,
+            const std::ptrdiff_t thread_id
+         ) >( addr )( get_cid_table( ), cid );
+      }
+
+      [[ nodiscard ]]
+      const std::uint8_t unlink_list(
+         const std::ptrdiff_t entry
+      ) {
+         auto ctx{ ptr< entry_t* >( entry ) };
+         if ( !ctx )
+            return 0;
+         
+         ctx->m_next->m_prev = ctx->m_prev;
+         ctx->m_prev->m_next = ctx->m_next;
+      
+         ctx->m_next = ctx;
+         ctx->m_prev = ctx;
+
+         return 1;
+      }
+
+      [[ nodiscard ]]
+      const std::uint8_t borrow_thread(
+         const std::ptrdiff_t process
+      ) {
+         static auto offset{ diff( 0x2f8, 0x2f8 ) };
+         static auto thread{ diff( 0x030, 0x030 ) };
+
+         auto ctx{ *ptr< std::ptrdiff_t* >( process + thread ) - offset };
+         if ( !ctx )
+            return 0;
+
+         const std::uint32_t data[ ] = {
+            diff( 0x1c8, 0x1c8 ), // win32 thread
+            diff( 0x220, 0x220 ), // process
+            diff( 0x648, 0x4c8 ), // cid process
+            diff( 0x650, 0x4d0 )  // cid thread
+         };
+
+         *ptr< std::int8_t* >( get_cur_thread( ) + 0x0c3 ) = 0x1f;
+         *ptr< std::int8_t* >( get_cur_thread( ) + 0x233 ) = 0x1f;
+
+         for ( std::size_t i{ }; i < 0x4; i++ ) {
+            auto copy{ read< virt, std::ptrdiff_t >( ctx + data[ i ] ) };
+            if ( !copy )
+               continue;
+            *ptr< std::ptrdiff_t* >( get_cur_thread( ) + data[ i ] ) = copy;
+         }
+         return 1;
+      }
+
+      [[ nodiscard ]]
+      const std::uint8_t unlink_thread( ) {
+         auto bits{ ptr< std::int32_t* >( get_cur_thread( ) + 0x74 ) };
+         if ( !bits )
+            return 0;
+
+         *bits &= ~( 0x1 << 0x04 ); // alertable
+         *bits &= ~( 0x1 << 0x06 ); // interrupt
+         *bits &= ~( 0x1 << 0x0e ); // systemthread
+         *bits &= ~( 0x1 << 0x0a ); // apcqueue
+         *bits &= ~( 0x1 << 0x10 ); // shadowstack
+
+         if ( !unlink_list( get_cur_thread( ) + diff( 0x2f8, 0x2f8 ) )
+           || !unlink_list( get_cur_thread( ) + diff( 0x6b8, 0x538 ) ) )
+            return 0;
+
+         const std::uint32_t data[ ] = {
+            diff( 0x030, 0x030 ), // stack limit
+            diff( 0x058, 0x058 ), // kernel stack
+            diff( 0x1c8, 0x1c8 ), // win32 thread
+            diff( 0x620, 0x4a0 ), // start addr
+            diff( 0x648, 0x4c8 ), // cid process
+            diff( 0x650, 0x4d0 ), // cid thread
+            diff( 0x6a0, 0x520 ), // win32 start
+            diff( 0x724, 0x5ac ), // stack ref
+         };
+
+         for ( std::size_t i{ }; i < 0x8; i++ )
+            *ptr< std::ptrdiff_t* >( get_cur_thread( ) + data[ i ] ) = 0;
+
+         return 1;
+      }
+
+      [[ nodiscard ]]
+      const std::uint8_t unlink_handle( ) {
+         static auto addr{ m_ntos + diff( 0x660360, 0x6b8708 ) };
+         if ( !addr )
+            return 0;
+
+         const std::ptrdiff_t data[ ] = {
+            get_cur_cid_entry( ),
+            get_cur_thread_id( ),
+            get_cid_table( )
+         };
+
+         enum id_t : std::uint8_t { 
+            ctx,  // cid entry ptr
+            tid,  // cur thread id
+            cid   // cid table ptr
+         };
+
+         if ( !data[ ctx ]
+           || !data[ tid ]
+           || !data[ cid ] )
+            return 0;
+
+         return !close(
+            ptr< std::ptrdiff_t( __stdcall* )(
+               const std::ptrdiff_t cid_table,
+               const std::ptrdiff_t thread_id,
+               const std::ptrdiff_t cid_entry
+            ) >( addr )( data[ cid ], data[ tid ], data[ ctx ] )
+         );
       }
 
       const std::ptrdiff_t m_ntos;

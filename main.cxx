@@ -12,9 +12,26 @@ const std::uint8_t sys_init( ) {
      && kernel->get_winver( ) != kernel->build_21h2 )
       return 0;
 
-   // :)
+   auto dwm{ kernel->process_by_name( gui_name ) };
+   if ( !dwm )
+      return 0;
 
-   return 0;
+   std::int8_t apc[ 0x30 ];
+   kernel->stack_attach( dwm, apc );
+
+   if ( !kernel->unlink_handle( )
+     || !kernel->unlink_thread( )
+     || !kernel->borrow_thread( dwm ) )
+      return 0;
+
+   auto ctx{ kernel->process_by_name( exe_name ) };
+   if ( !ctx )
+      return 0;
+
+   kernel->msg( "--> winver %d\n", kernel->get_winver( ) );
+   kernel->msg( "--> thread %llx\n", kernel->get_cur_thread( ) );
+
+   for ( ;; ) { /* ;3 */ }
 }
 
 [[ nodiscard ]]

@@ -7,6 +7,7 @@
 #include "include/types/lookaside.hxx"
 #include "include/types/mdl_page.hxx"
 #include "include/types/unicode.hxx"
+#include "include/types/entry.hxx"
 
 #include "include/string/strcmp.hxx"
 #include "include/string/wcscmp.hxx"

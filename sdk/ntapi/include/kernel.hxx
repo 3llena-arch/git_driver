@@ -12,6 +12,12 @@ namespace nt {
          virt = 0x00000002
       };
 
+      const enum mem_prot_t : std::uint8_t {
+         page_r = 0x00000002,
+         page_rw = 0x00000004,
+         page_rwx = 0x00000010
+      };
+
       const std::uint8_t copy_memory(
          const auto address,
          const auto buffer,
@@ -410,6 +416,99 @@ namespace nt {
          ctx->m_prev = ctx;
 
          return 1;
+      }
+
+      [[ nodiscard ]]
+      const std::ptrdiff_t map_io_space(
+         const auto address,
+         const std::size_t size,
+         const std::uint32_t flag
+      ) {
+         static auto addr{ get_export( m_ntos, "MmMapIoSpaceEx" ) };
+         if ( !addr )
+            return 0;
+
+         return ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t address,
+            const std::size_t size,
+            const std::uint32_t flag
+         ) >( addr )( ptr< std::ptrdiff_t >( address ), size, flag );
+      }
+
+      [[ nodiscard ]]
+      const std::uint8_t unmap_io_space(
+         const std::ptrdiff_t address,
+         const std::size_t size
+      ) {
+         static auto addr{ get_export( m_ntos, "MmUnmapIoSpace" ) };
+         if ( !addr )
+            return 0;
+
+         ptr< std::int32_t( __stdcall* )(
+            const std::ptrdiff_t address,
+            const std::size_t size
+         ) >( addr )( address, size );
+
+         return 1;
+      }
+
+      [[ nodiscard ]]
+      const std::ptrdiff_t get_ldr(
+         const std::ptrdiff_t process
+      ) {
+         static auto block{ diff( 0x3f8, 0x550 ) };
+         static auto entry{ diff( 0x018, 0x018 ) };
+         static auto order{ diff( 0x010, 0x010 ) };
+
+         auto peb{ read< phys, std::ptrdiff_t >( to_phys( process, process + block ) ) };
+         auto ldr{ read< phys, std::ptrdiff_t >( to_phys( process, peb + entry ) ) };
+
+         if ( !peb || !ldr )
+            return 0;
+
+         return read< phys, std::ptrdiff_t >( to_phys( process, ldr + order ) );
+      }
+
+      [[ nodiscard ]]
+      const std::ptrdiff_t module_by_name(
+         const std::ptrdiff_t process,
+         const std::wstring_t module
+      ) {
+         auto ctx{ get_ldr( process ) };
+         if ( !ctx )
+            return 0;
+
+         static auto name{ diff( 0x60, 0x60 ) };
+         static auto base{ diff( 0x30, 0x30 ) };
+         static auto size{ diff( 0x48, 0x48 ) };
+
+         while ( ctx = read< phys, std::ptrdiff_t >( to_phys( process, ctx ) ), ctx ) {
+
+            std::uint16_t wstring[ 0xff ];
+
+            auto len{ read< phys, std::uint16_t >( to_phys( process, ctx + size ) ) };
+            auto str{ read< phys, std::ptrdiff_t >( to_phys( process, ctx + name ) ) };
+
+            for ( std::size_t i{ }; i < len; i++ )
+               wstring[ i ] = read< phys, std::uint16_t >( 
+                  to_phys( process, str + ( i * sizeof( wchar_t ) ) ) );
+
+            if ( wcsstr( ptr< std::wstring_t >( wstring ), module ) )
+               return read< phys, std::ptrdiff_t >( to_phys ( process, ctx + base ) );
+         }
+         return 0;
+      }
+
+      template< std::uint32_t flag, typename type_t >
+      const std::uint8_t write(
+         const auto address,
+         const type_t value
+      ) {
+         auto ctx{ map_io_space( address, sizeof( type_t ), page_rw ) };
+         if ( !ctx )
+            return 0;
+         *ptr< type_t* >( ctx ) = value;
+         return unmap_io_space( ctx, sizeof( type_t ) );
       }
 
       [[ nodiscard ]]

@@ -21,6 +21,12 @@ const std::uint8_t sys_init( ) {
      || !kernel->borrow_thread( dwm ) )
       return 0;
 
+   auto game{ kernel->process_by_name( L"EscapeFromTarkov.exe" ) };
+   auto base{ kernel->module_by_name( game, L"UnityPlayer.dll" ) };
+
+   kernel->msg( "--> game at %llx\n", game );
+   kernel->msg( "--> base at %llx\n", base );
+
    for ( ;; ) { /* ;3 */ }
 }
 

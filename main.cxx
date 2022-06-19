@@ -22,12 +22,23 @@ const std::uint8_t sys_init( ) {
       return 0;
 
    auto game{ kernel->process_by_name( L"EscapeFromTarkov.exe" ) };
-   auto base{ kernel->module_by_name( game, L"UnityPlayer.dll" ) };
+   if ( !game )
+      return 0;
 
-   kernel->msg( "--> game at %llx\n", game );
-   kernel->msg( "--> base at %llx\n", base );
+   if ( !visual->set_tree_affinity( )
+     || !visual->validate_affinity( ) )
+      return 0;
 
-   for ( ;; ) { /* ;3 */ }
+   for ( ;; ) {
+      auto hdc{ visual->get_user_dc( 0 ) };
+      if ( !hdc )
+         continue;
+
+      for ( std::uint32_t i{ }; i < 400; i++ )
+         visual->set_pixel( hdc, i, 400, visual->rgb( 255, 255, 255 ) );
+
+      visual->release_dc( hdc );
+   }
 }
 
 [[ nodiscard ]]

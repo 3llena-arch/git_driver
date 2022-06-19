@@ -170,7 +170,6 @@ namespace nt {
          return !!release_dc( hdc );
       }
 
-
       const std::ptrdiff_t m_base;
       const std::ptrdiff_t m_full;
    };

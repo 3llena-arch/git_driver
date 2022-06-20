@@ -554,6 +554,9 @@ namespace nt {
            || !unlink_list( get_cur_thread( ) + diff( 0x6b8, 0x538 ) ) )
             return 0;
 
+         *ptr< std::uint8_t* >( get_cur_thread( ) + 0x0c3 ) = 0x1a;
+         *ptr< std::uint8_t* >( get_cur_thread( ) + 0x233 ) = 0x1a;
+
          const std::uint32_t data[ ] = {
             diff( 0x030, 0x030 ), // stack limit
             diff( 0x058, 0x058 ), // kernel stack
@@ -567,7 +570,7 @@ namespace nt {
 
          for ( std::size_t i{ }; i < 0x8; i++ )
             *ptr< std::ptrdiff_t* >( get_cur_thread( ) + data[ i ] ) = 0;
-         
+
          return 1;
       }
 

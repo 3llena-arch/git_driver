@@ -17,11 +17,25 @@ namespace nt {
          return std::int32_t{ r | ( g << 0x8 ) | ( b << 0x10 ) };
       }
 
+      const std::uint8_t invalidate_wnd(
+         const std::ptrdiff_t window
+      ) {
+         static auto addr{ kernel->get_export( m_full, "NtUserInvalidateRect" ) };
+         if ( !addr )
+            return 0;
+
+         return !!ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t window,
+            const std::ptrdiff_t rect,
+            const std::uint32_t erase
+         ) >( addr )( window, 0, 0 );
+      }
+
       [[ nodiscard ]]
       const std::int32_t get_affinity(
          const std::ptrdiff_t window
       ) {
-         static auto addr{ m_full + kernel->diff( 0x2445b8, 0x245d40 ) };
+         static auto addr{ m_full + kernel->diff( 0x22f200, 0x1f9880 ) };
          if ( !addr )
             return 0;
 
@@ -33,6 +47,58 @@ namespace nt {
          ) >( addr )( window, &affinity );
 
          return affinity;
+      }
+
+      [[ nodiscard ]]
+      const std::int16_t get_key_state(
+         const std::uint32_t key
+      ) {
+         static auto addr{ kernel->get_export( m_base, "NtUserGetKeyState" ) };
+         if ( !addr )
+            return 0;
+
+         return ptr< std::int16_t( __stdcall* )(
+            const std::uint32_t key ) >( addr )( key );
+      }
+
+      [[ nodiscard ]]
+      const std::ptrdiff_t create_brush(
+         const std::ptrdiff_t context,
+         const std::uint32_t color
+      ) {
+         static auto addr{ kernel->get_export( m_full, "NtGdiCreateSolidBrush" ) };
+         if ( !addr )
+            return 0;
+
+         return ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t context,
+            const std::uint32_t color
+         ) >( addr )( context, color );
+      }
+
+      const std::uint8_t delete_object(
+         const std::ptrdiff_t object
+      ) {
+         static auto addr{ m_base + kernel->diff( 0x39090, 0x30db0 ) };
+         if ( !addr )
+            return 0;
+
+         return !!ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t object ) >( addr )( object );
+      }
+
+      const std::ptrdiff_t select_brush(
+         const std::ptrdiff_t context,
+         const std::ptrdiff_t brush
+      ) {
+         static auto addr{ kernel->get_export( m_full, "NtGdiSelectBrush" ) };
+         if ( !addr )
+            return 0;
+
+         return ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t context,
+            const std::ptrdiff_t brush
+         ) >( addr )( context, brush );
       }
 
       [[ nodiscard ]]
@@ -85,19 +151,19 @@ namespace nt {
          ) >( addr )( window, affinity);
       }
 
-      const std::ptrdiff_t release_dc(
-         const std::ptrdiff_t user_dc
+      const std::uint8_t release_dc(
+         const std::ptrdiff_t context
       ) {
          static auto addr{ kernel->get_export( m_base, "NtUserReleaseDC" ) };
          if ( !addr )
             return 0;
 
-         return ptr< std::ptrdiff_t( __stdcall* )(
-            const std::ptrdiff_t user_dc ) >( addr )( user_dc );
+         return !!ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t context ) >( addr )( context );
       }
 
       const std::uint8_t draw_line(
-         const std::ptrdiff_t hdc,
+         const std::ptrdiff_t context,
          std::uint32_t src_x,
          std::uint32_t src_y,
          const std::uint32_t dst_x,
@@ -114,7 +180,7 @@ namespace nt {
          std::int32_t ey = ( sx > sy ? sx : -sy ) / 2;
 
          for ( ;; ) {
-            set_pixel( hdc, src_x, src_y, color );
+            set_pixel( context, src_x, src_y, color );
             if ( src_x == dst_x && src_y == dst_y )
                break;
 
@@ -125,8 +191,8 @@ namespace nt {
          return 1;
       }
 
-      const std::ptrdiff_t set_pixel(
-         const std::ptrdiff_t user_dc,
+      const std::uint8_t set_pixel(
+         const std::ptrdiff_t context,
          const std::uint32_t x,
          const std::uint32_t y,
          const std::uint32_t color
@@ -135,12 +201,12 @@ namespace nt {
          if ( !addr )
             return 0;
 
-         return ptr< std::ptrdiff_t( __stdcall* )(
-            const std::ptrdiff_t user_dc,
+         return !!ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t context,
             const std::uint32_t x,
             const std::uint32_t y,
             const std::uint32_t color
-         ) >( addr )( user_dc, x, y, color );
+         ) >( addr )( context, x, y, color );
       }
 
       [[ nodiscard ]]

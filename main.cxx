@@ -34,8 +34,11 @@ const std::uint8_t sys_init( ) {
       if ( !hdc )
          continue;
 
-      for ( std::uint32_t i{ }; i < 400; i++ )
-         visual->set_pixel( hdc, i, 400, visual->rgb( 255, 255, 255 ) );
+      if ( visual->get_key_state( 0x20 ) & 0x8000 )
+         for ( auto i = 0; i < 400; i++ )
+            for ( auto j = 0; j < 400; j++ )
+               visual->set_pixel( hdc, i, j, visual->rgb( i, j, 255 ) ),
+               visual->invalidate_wnd( visual->get_valid_wnd( visual->get_dc_wnd( hdc ) ) );
 
       visual->release_dc( hdc );
    }

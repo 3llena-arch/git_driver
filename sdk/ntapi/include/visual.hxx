@@ -8,6 +8,13 @@ namespace nt {
          wda_exclude = 0x00000011
       };
 
+      const enum raster_t : std::uint32_t {
+         pat_copy = 0x00f00021,
+         pat_invert = 0x005a0049,
+         blackness = 0x00000042,
+         whiteness = 0x00ff0062
+      };
+
       [[ nodiscard ]]
       constexpr std::int32_t rgb(
          const std::uint8_t r,
@@ -35,7 +42,7 @@ namespace nt {
       const std::int32_t get_affinity(
          const std::ptrdiff_t window
       ) {
-         static auto addr{ m_full + kernel->diff( 0x22f200, 0x1f9880 ) };
+         static auto addr{ kernel->get_export( m_full, "NtUserGetWindowDisplayAffinity" ) };
          if ( !addr )
             return 0;
 
@@ -79,7 +86,7 @@ namespace nt {
       const std::uint8_t delete_object(
          const std::ptrdiff_t object
       ) {
-         static auto addr{ m_base + kernel->diff( 0x39090, 0x30db0 ) };
+         static auto addr{ kernel->get_export( m_base, "GreDeleteObject" ) };
          if ( !addr )
             return 0;
 
@@ -102,15 +109,24 @@ namespace nt {
       }
 
       [[ nodiscard ]]
-      const std::ptrdiff_t get_user_dc(
-         const std::ptrdiff_t window
-      ) {
+      const std::ptrdiff_t get_user_dc( ) {
          static auto addr{ kernel->get_export( m_base, "NtUserGetDC" ) };
          if ( !addr )
             return 0;
 
          return ptr< std::ptrdiff_t( __stdcall* )(
-            const std::ptrdiff_t window ) >( addr )( window );
+            const std::ptrdiff_t window ) >( addr )( 0 );
+      }
+
+      const std::uint8_t release_dc(
+         const std::ptrdiff_t context
+      ) {
+         static auto addr{ kernel->get_export( m_base, "NtUserReleaseDC" ) };
+         if ( !addr )
+            return 0;
+
+         return !!ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t context ) >( addr )( context );
       }
 
       [[ nodiscard ]]
@@ -151,17 +167,6 @@ namespace nt {
          ) >( addr )( window, affinity);
       }
 
-      const std::uint8_t release_dc(
-         const std::ptrdiff_t context
-      ) {
-         static auto addr{ kernel->get_export( m_base, "NtUserReleaseDC" ) };
-         if ( !addr )
-            return 0;
-
-         return !!ptr< std::ptrdiff_t( __stdcall* )(
-            const std::ptrdiff_t context ) >( addr )( context );
-      }
-
       const std::uint8_t draw_line(
          const std::ptrdiff_t context,
          std::uint32_t src_x,
@@ -191,6 +196,28 @@ namespace nt {
          return 1;
       }
 
+      const std::uint8_t pat_blt(
+         const std::ptrdiff_t context,
+         const std::uint32_t x,
+         const std::uint32_t y,
+         const std::uint32_t w,
+         const std::uint32_t h,
+         const std::uint32_t flags
+      ) {
+         static auto addr{ kernel->get_export( m_full, "NtGdiPatBlt" ) };
+         if ( !addr )
+            return 0;
+
+         return !!ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t context,
+            const std::uint32_t x,
+            const std::uint32_t y,
+            const std::uint32_t w,
+            const std::uint32_t h,
+            const std::uint32_t flags
+         ) >( addr )( context, x, y, w, h, flags );
+      }
+
       const std::uint8_t set_pixel(
          const std::ptrdiff_t context,
          const std::uint32_t x,
@@ -211,7 +238,7 @@ namespace nt {
 
       [[ nodiscard ]]
       const std::uint8_t validate_affinity( ) {
-         auto hdc{ get_user_dc( 0 ) };
+         auto hdc{ get_user_dc( ) };
          auto wnd{ get_dc_wnd( hdc ) };
 
          if ( !hdc || !wnd )
@@ -226,7 +253,7 @@ namespace nt {
 
       [[ nodiscard ]]
       const std::uint8_t set_tree_affinity( ) {
-         auto hdc{ get_user_dc( 0 ) };
+         auto hdc{ get_user_dc( ) };
          auto wnd{ get_dc_wnd( hdc ) };
 
          if ( !hdc || !wnd )

@@ -2,6 +2,7 @@
 
 nt::kernel_t* kernel{ };
 nt::visual_t* visual{ };
+tk::tarkov_t* tarkov{ };
 
 [[ nodiscard ]]
 const std::uint8_t sys_init( ) {
@@ -22,25 +23,21 @@ const std::uint8_t sys_init( ) {
       return 0;
 
    auto game{ kernel->process_by_name( L"EscapeFromTarkov.exe" ) };
-   if ( !game )
-      return 0;
+   auto base{ kernel->module_by_name( game, L"UnityPlayer.dll" ) };
 
    if ( !visual->set_tree_affinity( )
      || !visual->validate_affinity( ) )
       return 0;
 
+   tarkov->m_game = game;
+   tarkov->m_base = base;
+
    for ( ;; ) {
-      auto hdc{ visual->get_user_dc( 0 ) };
-      if ( !hdc )
+      auto context{ visual->get_user_dc( ) };
+      if ( !context )
          continue;
 
-      if ( visual->get_key_state( 0x20 ) & 0x8000 )
-         for ( auto i = 0; i < 400; i++ )
-            for ( auto j = 0; j < 400; j++ )
-               visual->set_pixel( hdc, i, j, visual->rgb( i, j, 255 ) ),
-               visual->invalidate_wnd( visual->get_valid_wnd( visual->get_dc_wnd( hdc ) ) );
-
-      visual->release_dc( hdc );
+      visual->release_dc( context );
    }
 }
 

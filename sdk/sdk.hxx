@@ -20,6 +20,9 @@ namespace std {
    using int32_t = int;
    using int16_t = short;
    using int8_t = char;
+
+   using double_t = double;
+   using float_t = float;
 }
 
 #ifdef __ptr

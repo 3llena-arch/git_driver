@@ -23,9 +23,25 @@ namespace tk {
          return read;
       }
 
+      template< typename type_t >
+      const type_t read_chain(
+         const auto address,
+         const std::ptrdiff_t* chain,
+         const std::size_t length
+      ) {
+         auto ctx{ read< std::ptrdiff_t >( address + chain[ 0 ] ) };
+         if ( !ctx )
+            return 0;
+
+         for ( std::size_t i{ 1 }; i < length - 1; i++ )
+            ctx = read< std::ptrdiff_t >( ctx + chain[ i ] );
+
+         return read< type_t >( ctx + chain[ length - 1 ] );
+      }
+
       [[ nodiscard ]]
       const std::float_t get_timescale( ) {
-         static auto addr{ read< std::ptrdiff_t >( m_base + 0x17ffb1 ) };
+         static auto addr{ read< std::ptrdiff_t >( m_base + 0x17ffb18 ) };
          if ( !addr )
             return 0;
          return read< std::float_t >( addr + 0xfc );
@@ -34,10 +50,10 @@ namespace tk {
       const std::uint8_t set_timescale(
          const std::float_t timescale
       ) {
-         static auto addr{ read< std::ptrdiff_t >( m_base + 0x17ffb1 ) };
+         static auto addr{ read< std::ptrdiff_t >( m_base + 0x17ffb18 ) };
          if ( !addr )
             return 0;
-         return write< std::float_t >( addr, timescale );
+         return write< std::float_t >( addr + 0xfc, timescale );
       }
 
       [[ nodiscard ]]

@@ -2,7 +2,6 @@
 
 nt::kernel_t* kernel{ };
 nt::visual_t* visual{ };
-tk::tarkov_t* tarkov{ };
 
 [[ nodiscard ]]
 const std::uint8_t sys_init( ) {
@@ -29,16 +28,10 @@ const std::uint8_t sys_init( ) {
      || !visual->validate_affinity( ) )
       return 0;
 
-   tarkov->m_game = game;
-   tarkov->m_base = base;
+   tk::m_game = game;
+   tk::m_base = base;
 
-   for ( ;; ) {
-      auto context{ visual->get_user_dc( ) };
-      if ( !context )
-         continue;
-
-      visual->release_dc( context );
-   }
+   for ( ;; ) { tk::run_loop( ); }
 }
 
 [[ nodiscard ]]

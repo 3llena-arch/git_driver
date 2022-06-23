@@ -460,11 +460,11 @@ namespace nt {
          static auto entry{ diff( 0x018, 0x018 ) };
          static auto order{ diff( 0x010, 0x010 ) };
 
-         auto peb{ read< phys, std::ptrdiff_t >( to_phys( process, process + block ) ) };
-         auto ldr{ read< phys, std::ptrdiff_t >( to_phys( process, peb + entry ) ) };
+         std::ptrdiff_t peb{ };
+         std::ptrdiff_t ldr{ };
 
-         if ( !peb || !ldr )
-            return 0;
+         while ( !peb ) peb = read< phys, std::ptrdiff_t >( to_phys( process, process + block ) );
+         while ( !ldr ) ldr = read< phys, std::ptrdiff_t >( to_phys( process, peb + entry ) );
 
          return read< phys, std::ptrdiff_t >( to_phys( process, ldr + order ) );
       }

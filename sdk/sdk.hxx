@@ -30,8 +30,8 @@ namespace std {
    type_t ptr( auto obj ) { return ( type_t )obj; }
 #endif
 
-extern "C" std::int32_t _fltused( ) { return 0; }
-extern "C" std::int32_t __chkstk( ) { return 0; }
+extern "C" std::int32_t _fltused = 0;
+extern "C" std::int32_t __chkstk = 0;
 
 #include "ntapi/ntapi.hxx"
 #include "tarkov/tarkov.hxx"

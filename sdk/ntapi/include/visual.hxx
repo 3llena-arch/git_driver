@@ -60,7 +60,7 @@ namespace nt {
       const std::int16_t get_key_state(
          const std::uint32_t key
       ) {
-         static auto addr{ kernel->get_export( m_base, "NtUserGetKeyState" ) };
+         static auto addr{ kernel->get_export( m_base, "NtUserGetAsyncKeyState" ) };
          if ( !addr )
             return 0;
 
@@ -81,6 +81,24 @@ namespace nt {
             const std::ptrdiff_t context,
             const std::uint32_t color
          ) >( addr )( context, color );
+      }
+
+      [[ nodiscard ]]
+      const rect_t get_wnd_rect(
+         const std::ptrdiff_t window
+      ) {
+         static auto addr{ kernel->get_export( m_full, "DxgkEngGetWindowRect" ) };
+         if ( !addr )
+            return { };
+
+         rect_t rectangle{ };
+
+         ptr< std::ptrdiff_t( __stdcall* )(
+            const std::ptrdiff_t window,
+            const rect_t* rectangle
+         ) >( addr )( window, &rectangle );
+
+         return rectangle;
       }
 
       const std::uint8_t delete_object(

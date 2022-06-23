@@ -8,6 +8,7 @@
 #include "include/types/mdl_page.hxx"
 #include "include/types/unicode.hxx"
 #include "include/types/entry.hxx"
+#include "include/types/rect.hxx"
 
 #include "include/string/strcmp.hxx"
 #include "include/string/wcscmp.hxx"

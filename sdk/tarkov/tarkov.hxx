@@ -49,14 +49,6 @@ namespace tk {
       return read< type_t >( ctx + offs[ length - 1 ] );
    }
 
-   [[ nodiscard ]]
-   const std::float_t get_timescale( ) {
-      auto addr{ read< std::ptrdiff_t >( m_base + 0x17ffb18 ) };
-      if ( !addr )
-         return 0.f;
-      return read< std::float_t >( addr + 0xfc );
-   }
-
    const std::uint8_t get_key(
       const std::int32_t key
    ) {
@@ -137,8 +129,83 @@ namespace tk {
    }
 
    [[ nodiscard ]]
+   const matrix_t get_view_matrix( ) {
+      auto cam{ obj_by_name< tag >( "FPS Camera" ) };
+      if ( !cam )
+         return { };
+
+      const std::ptrdiff_t chain[ ] = {
+         0x00000030,
+         0x00000018,
+         0x000002e4
+      };
+
+      return read_chain< matrix_t >( cam, chain, 3 );
+   }
+
+   const std::uint8_t set_stamina( 
+      const std::float_t stamina
+   ) {
+      auto addr{ read< std::ptrdiff_t >( m_base + 0x18007f0 ) };
+      if ( !addr )
+         return 0;
+
+      const std::ptrdiff_t chain[ ] = {
+         0x00000060,
+         0x00000040,
+         0x000000d8,
+         0x00000058,
+         0x000004f0,
+         0x00000038
+      };
+
+      auto chain_ptr{ read_chain< std::ptrdiff_t >( addr, chain, 6 ) };
+      if ( !chain_ptr )
+         return 0;
+
+      return write< std::float_t >( chain_ptr + 0x48, stamina );
+   }
+
+   const std::uint8_t set_aim_stamina(
+      const std::float_t stamina
+   ) {
+      auto addr{ read< std::ptrdiff_t >( m_base + 0x18007f0 ) };
+      if ( !addr )
+         return 0;
+
+      const std::ptrdiff_t chain[ ] = {
+         0x00000060,
+         0x00000040,
+         0x000000d8,
+         0x00000058,
+         0x00000310,
+         0x00000100
+      };
+
+      auto chain_ptr{ read_chain< std::ptrdiff_t >( addr, chain, 6 ) };
+      if ( !chain_ptr )
+         return 0;
+
+      return write< std::float_t >( chain_ptr + 0xb8, stamina );
+   }
+
+   [[ nodiscard ]]
+   const std::ptrdiff_t get_game_world( ) {
+      auto world{ obj_by_name< act >( "GameWorld" ) };
+      if ( !world )
+         return 0;
+
+      const std::ptrdiff_t chain[ ] = {
+         0x00000030,
+         0x00000018,
+         0x00000028
+      };
+
+      return read_chain< std::ptrdiff_t >( world, chain, 3 );
+   }
+
+   [[ nodiscard ]]
    const vec2_t< std::int32_t >to_screen(
-      const matrix_t view_matrix,
       const vec3_t< std::float_t >world
    ) {
       const auto dot = [ ](
@@ -150,38 +217,47 @@ namespace tk {
               + ( src.m_z * dst.m_z );
       };
 
+      auto view_matrix{ get_view_matrix( ) };
+      if ( !&view_matrix )
+         return { };
+
       vec3_t< std::float_t >t = { view_matrix._14, view_matrix._24, view_matrix._34 };
       vec3_t< std::float_t >r = { view_matrix._11, view_matrix._21, view_matrix._31 };
       vec3_t< std::float_t >u = { view_matrix._12, view_matrix._22, view_matrix._32 };
 
-      std::float_t w{ dot( t, u ) + view_matrix._44 };
-      if ( w < 0.1f )
+      std::float_t w{ dot( t, world ) + view_matrix._44 };
+      if ( w < 0.098f )
          return { };
 
       std::float_t x{ dot( r, world ) + view_matrix._41 };
       std::float_t y{ dot( u, world ) + view_matrix._42 };
 
-      return vec2_t< std::int32_t >{
+      vec2_t< std::int32_t > out{
          ptr< std::int32_t >( ( get_screen_size( ).m_x >> 0x1 ) * ( 1.f + x / w ) ),
          ptr< std::int32_t >( ( get_screen_size( ).m_y >> 0x1 ) * ( 1.f - y / w ) )
       };
+
+      if ( out.m_x > get_screen_size( ).m_x ) out.m_x = get_screen_size( ).m_x;
+      if ( out.m_y > get_screen_size( ).m_y ) out.m_y = get_screen_size( ).m_y;
+
+      if ( out.m_x < 0 ) out.m_x = 0;
+      if ( out.m_y < 0 ) out.m_y = 0;
+
+      return out;
    }
 
-   const std::uint8_t run_loop( ) {
+   const void run_loop( ) {
       auto fps_cam{ obj_by_name< tag >( "FPS Camera" ) };
       if ( !fps_cam )
-         return 0;
-
-      std::ptrdiff_t chain[ ] = { 0x30, 0x18, 0xc0 };
-      auto matrix{ read_chain< matrix_t >( fps_cam, chain, 3 ) };
-      auto screen{ to_screen(matrix, vec3_t< std::float_t >{ 0.f, 0.f, 0.f } ) };
-
+         return;
+      
       auto hdc{ visual->get_user_dc( ) };
       if ( !hdc )
-         return 0;
+         return;
 
-      visual->draw_line( hdc, 0, 0, screen.m_x, screen.m_y, visual->rgb( 255, 255, 255 ) );
+      // ;3
+
+      visual->invalidate_wnd( visual->get_dc_wnd( hdc ) );
       visual->release_dc( hdc );
-      return 1;
    }
 }

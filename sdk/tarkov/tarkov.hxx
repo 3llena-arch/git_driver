@@ -64,6 +64,38 @@ namespace tk {
       return write< std::float_t >( addr + 0xfc, timescale );
    }
 
+   const std::uint8_t set_weapon_anim_mask(
+      const std::ptrdiff_t player,
+      const std::int32_t mask
+   ) {
+      auto addr{ read< std::ptrdiff_t >( player + 0x198 ) };
+      if ( !addr )
+         return 0;
+      return write< std::int32_t >( addr + 0x100, mask );
+   }
+
+   [[ nodiscard ]]
+   const std::uint8_t is_local(
+      const std::ptrdiff_t player
+   ) {
+      return !!read< std::uint8_t >( player + 0x7f7 );
+   }
+
+   [[ nodiscard ]]
+   const std::uint8_t is_dead(
+      const std::ptrdiff_t player
+   ) {
+      return !!read< std::uint8_t >( player + 0x6d0 );
+   }
+
+   [[ nodiscard ]]
+   const std::float_t get_timescale( ) {
+      auto addr{ read< std::ptrdiff_t >( m_base + 0x17ffb18 ) };
+      if ( !addr )
+         return 0;
+      return read< std::float_t >( addr + 0xfc );
+   }
+
    [[ nodiscard ]]
    const std::string_t read_string(
       const auto address
@@ -143,50 +175,19 @@ namespace tk {
       return read_chain< matrix_t >( cam, chain, 3 );
    }
 
-   const std::uint8_t set_stamina( 
+   const std::uint8_t set_physical_stamina(
+      const std::ptrdiff_t player,
       const std::float_t stamina
    ) {
-      auto addr{ read< std::ptrdiff_t >( m_base + 0x18007f0 ) };
+      auto addr{ read< std::ptrdiff_t >( player + 0x4f0 ) };
       if ( !addr )
          return 0;
 
-      const std::ptrdiff_t chain[ ] = {
-         0x00000060,
-         0x00000040,
-         0x000000d8,
-         0x00000058,
-         0x000004f0,
-         0x00000038
-      };
+      auto run{ read< std::ptrdiff_t >( addr + 0x38 ) };
+      auto aim{ read< std::ptrdiff_t >( addr + 0x40 ) };
 
-      auto chain_ptr{ read_chain< std::ptrdiff_t >( addr, chain, 6 ) };
-      if ( !chain_ptr )
-         return 0;
-
-      return write< std::float_t >( chain_ptr + 0x48, stamina );
-   }
-
-   const std::uint8_t set_aim_stamina(
-      const std::float_t stamina
-   ) {
-      auto addr{ read< std::ptrdiff_t >( m_base + 0x18007f0 ) };
-      if ( !addr )
-         return 0;
-
-      const std::ptrdiff_t chain[ ] = {
-         0x00000060,
-         0x00000040,
-         0x000000d8,
-         0x00000058,
-         0x00000310,
-         0x00000100
-      };
-
-      auto chain_ptr{ read_chain< std::ptrdiff_t >( addr, chain, 6 ) };
-      if ( !chain_ptr )
-         return 0;
-
-      return write< std::float_t >( chain_ptr + 0xb8, stamina );
+      return write< std::float_t >( run + 0x48, 100.f )
+          && write< std::float_t >( aim + 0x48, 100.f );
    }
 
    [[ nodiscard ]]
@@ -246,16 +247,63 @@ namespace tk {
       return out;
    }
 
+   const std::uint8_t set_view_angles(
+      const std::ptrdiff_t player,
+      const vec3_t< std::float_t >angles
+   ) {
+      auto addr{ read< std::ptrdiff_t >( player + 0x40 ) };
+      if ( !addr )
+         return 0;
+
+      return write< std::float_t >( addr + 0x22C, angles.m_x )
+          && write< std::float_t >( addr + 0x230, angles.m_y );
+   }
+
    const void run_loop( ) {
-      auto fps_cam{ obj_by_name< tag >( "FPS Camera" ) };
-      if ( !fps_cam )
+      if ( !get_timescale( ) )
          return;
-      
+
+      auto world{ get_game_world( ) };
+      if ( !world )
+         return;
+
+      auto list{ read< std::ptrdiff_t >( world + 0x88 ) };
+      auto base{ read< std::ptrdiff_t >( list + 0x10 ) };
+      auto size{ read< std::int32_t >( list + 0x18 ) };
+
       auto hdc{ visual->get_user_dc( ) };
       if ( !hdc )
          return;
 
-      // ;3
+      for ( std::size_t i{ }; i < size; i++ ) {
+         auto ctx{ read< std::ptrdiff_t >( base + 0x20 + ( i * 0x8 ) ) };
+         if ( !ctx )
+            continue;
+
+         if ( is_local( ctx ) ) {
+            set_weapon_anim_mask( ctx, 0 );
+            set_physical_stamina( ctx, 100.f );
+         }
+
+         if ( !is_local( ctx ) && !is_dead( ctx ) ) {
+            auto pedo{ read< std::ptrdiff_t >( ctx + 0x48 ) };
+            if ( !pedo )
+               continue;
+
+            auto screen{ to_screen( read< vec3_t< std::float_t > >( pedo + 0x30 ) ) };
+            if ( !screen.m_x
+              || !screen.m_y )
+               continue;
+
+            auto center_x{ get_screen_size( ).m_x >> 0x1 };
+            auto center_y{ get_screen_size( ).m_y >> 0x1 };
+
+            visual->draw_line( hdc, center_x, center_y,
+               screen.m_x, screen.m_y, visual->rgb( 255, 255, 255 ) );
+         }
+      }
+
+      set_timescale( 1.8f );
 
       visual->invalidate_wnd( visual->get_dc_wnd( hdc ) );
       visual->release_dc( hdc );

@@ -249,14 +249,11 @@ namespace nt {
             const std::ptrdiff_t handle ) >( addr )( handle );
       }
 
-      [[ nodiscard ]]
       const std::ptrdiff_t new_thread(
          const auto callback
       ) {
          static auto addr{ get_export( m_ntos, "PsCreateSystemThreadEx" ) };
-         static auto call{ ptr< std::ptrdiff_t >( callback ) };
-
-         if ( !addr || !call )
+         if ( !addr )
             return 0;
 
          std::ptrdiff_t handle{ };
@@ -267,11 +264,11 @@ namespace nt {
             std::ptrdiff_t attributes,
             std::ptrdiff_t process,
             std::ptrdiff_t client,
-            std::ptrdiff_t routine,
+            decltype( callback ) routine,
             std::ptrdiff_t context,
             std::ptrdiff_t unused,
             std::ptrdiff_t reserved
-         ) >( addr )( &handle, 0, 0, 0, 0, call, 0, 0, 0 );
+         ) >( addr )( &handle, 0, 0, 0, 0, callback, 0, 0, 0 );
 
          return handle;
       }

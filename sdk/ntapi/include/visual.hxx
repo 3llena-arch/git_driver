@@ -182,15 +182,15 @@ namespace nt {
          return ptr< std::ptrdiff_t( __stdcall* )(
             const std::ptrdiff_t window,
             const std::int32_t affinity
-         ) >( addr )( window, affinity);
+         ) >( addr )( window, affinity );
       }
 
       const std::uint8_t draw_line(
          const std::ptrdiff_t context,
          std::uint32_t src_x,
          std::uint32_t src_y,
-         const std::uint32_t dst_x,
-         const std::uint32_t dst_y,
+         std::uint32_t dst_x,
+         std::uint32_t dst_y,
          const std::uint32_t color
       ) {
          std::int32_t dx = ( dx = ( dst_x - src_x ) ) < 0 ? -dx : dx;
@@ -203,9 +203,8 @@ namespace nt {
          std::int32_t ey = ( sx > sy ? sx : -sy ) / 2;
 
          for ( ;; ) {
-            set_pixel( context, src_x, src_y, color );
-            if ( src_x == dst_x && src_y == dst_y )
-               break;
+            if ( set_pixel( context, src_x, src_y, color ) ) break;
+            if ( src_x == dst_x && src_y == dst_y ) break;
 
             ey = ex;
             if ( ey > -dx ) ex -= dy, src_x += sx;

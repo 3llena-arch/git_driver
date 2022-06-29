@@ -151,7 +151,7 @@ namespace tk {
    template< std::uint32_t flag >
    const std::ptrdiff_t get_manager( ) {
       auto addr{ read< std::ptrdiff_t >( m_base + 0x17ffd28 ) };
-      if ( !addr )
+      if ( !addr || !get_timescale( ) )
          return 0;
 
       if ( flag == act ) return read< std::ptrdiff_t >( addr + 0x28 );
@@ -216,8 +216,8 @@ namespace tk {
       auto run{ read< std::ptrdiff_t >( addr + 0x38 ) };
       auto aim{ read< std::ptrdiff_t >( addr + 0x40 ) };
 
-      return write< std::float_t >( run + 0x48, 100.f )
-          && write< std::float_t >( aim + 0x48, 100.f );
+      return write< std::float_t >( run + 0x48, stamina )
+          && write< std::float_t >( aim + 0x48, stamina );
    }
 
    [[ nodiscard ]]
@@ -259,30 +259,25 @@ namespace tk {
               + ( src.m_z * dst.m_z );
       };
 
-      auto view_matrix{ get_view_matrix( ) };
-      if ( !&view_matrix )
+      auto matrix{ get_view_matrix( ) };
+      if ( !&matrix )
          return { };
 
-      vec3_t< std::float_t >t = { view_matrix._14, view_matrix._24, view_matrix._34 };
-      vec3_t< std::float_t >r = { view_matrix._11, view_matrix._21, view_matrix._31 };
-      vec3_t< std::float_t >u = { view_matrix._12, view_matrix._22, view_matrix._32 };
+      vec3_t< std::float_t >t = { matrix._14, matrix._24, matrix._34 };
+      vec3_t< std::float_t >r = { matrix._11, matrix._21, matrix._31 };
+      vec3_t< std::float_t >u = { matrix._12, matrix._22, matrix._32 };
 
-      std::float_t w{ dot( t, world ) + view_matrix._44 };
+      std::float_t w{ dot( t, world ) + matrix._44 };
       if ( w < 0.1f )
          return { };
 
-      std::float_t x{ dot( r, world ) + view_matrix._41 };
-      std::float_t y{ dot( u, world ) + view_matrix._42 };
+      std::float_t x{ dot( r, world ) + matrix._41 };
+      std::float_t y{ dot( u, world ) + matrix._42 };
 
-      vec2_t< std::int32_t > out{
+      return vec2_t< std::int32_t >{
          ptr< std::int32_t >( ( get_screen_size( ).m_x >> 0x1 ) * ( 1.f + x / w ) ),
          ptr< std::int32_t >( ( get_screen_size( ).m_y >> 0x1 ) * ( 1.f - y / w ) )
       };
-
-      clamp< std::int32_t >( out.m_x, 0, get_screen_size( ).m_x );
-      clamp< std::int32_t >( out.m_y, 0, get_screen_size( ).m_y );
-
-      return out;
    }
 
    const std::uint8_t set_view_angles(
@@ -301,6 +296,11 @@ namespace tk {
       auto ctx{ visual->get_user_dc( ) };
       if ( !ctx )
          return;
+
+      visual->draw_line( ctx, 960 - 5, 540, 960 + 5, 540, visual->rgb( 255, 255, 255 ) );
+      visual->draw_line( ctx, 960, 540 - 5, 960, 540 + 5, visual->rgb( 255, 255, 255 ) );
+
+      visual->invalidate_wnd( visual->get_dc_wnd( ctx ) );
       visual->release_dc( ctx );
    }
 
@@ -322,7 +322,17 @@ namespace tk {
             set_weapon_anim_mask( ctx, 0 );
             set_physical_stamina( ctx, 100.f );
          }
-      }
+
+         if ( !is_local( ctx ) && !is_dead( ctx ) ) {
+            auto dst{ to_screen( get_root_pos( ctx ) ) };
+            if ( !dst.m_x
+              || !dst.m_y )
+               continue;
+
+            kernel->msg( "--> x: %d\n", dst.m_x );
+            kernel->msg( "--> y: %d\n", dst.m_y );
+         }
+      } 
 
       set_timescale( 1.8f );
    }

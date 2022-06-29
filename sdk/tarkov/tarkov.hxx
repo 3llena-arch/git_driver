@@ -49,12 +49,6 @@ namespace tk {
       return read< type_t >( ctx + offs[ length - 1 ] );
    }
 
-   const std::uint8_t get_key(
-      const std::int32_t key
-   ) {
-      return !!( visual->get_key_state( key ) & 0x8000 );
-   }
-
    const std::uint8_t set_timescale(
       const std::float_t timescale
    ) {
@@ -72,6 +66,54 @@ namespace tk {
       if ( !addr )
          return 0;
       return write< std::int32_t >( addr + 0x100, mask );
+   }
+
+   [[ nodiscard ]]
+   const std::uint8_t is_player(
+      const std::ptrdiff_t player
+   ) {
+      auto addr{ read< std::ptrdiff_t >( player + 0x4e0 ) };
+      auto info{ read< std::ptrdiff_t >( addr + 0x28 ) };
+
+      if ( !addr || !info )
+         return 0;
+
+      return !!read< std::int32_t >( info + 0x64 );
+   }
+
+   [[ nodiscard ]]
+   const std::ptrdiff_t get_bone_matrix(
+      const std::ptrdiff_t player
+   ) {
+      const std::ptrdiff_t chain[ ] = {
+         0x000000a8,
+         0x00000028,
+         0x00000028,
+         0x00000010
+      };
+
+      return read_chain< std::ptrdiff_t >( player, chain, 4 );
+   }
+
+   [[ nodiscard ]]
+   const vec3_t< std::float_t > get_root_pos(
+      const std::ptrdiff_t player
+   ) {
+      auto matrix{ get_bone_matrix( player ) };
+      if ( !matrix )
+         return { };
+
+      const std::ptrdiff_t chain[ ] = {
+         0x00000020,
+         0x00000010,
+         0x00000038
+      };
+
+      auto bone{ read_chain< std::ptrdiff_t >( matrix, chain, 3 ) };
+      if ( !bone )
+         return { };
+
+      return read< vec3_t< std::float_t > >( bone + 0x90 );
    }
 
    [[ nodiscard ]]
@@ -145,19 +187,7 @@ namespace tk {
 
    [[ nodiscard ]]
    const vec2_t< std::int32_t >get_screen_size( ) {
-      auto hdc{ visual->get_user_dc( ) };
-      auto wnd{ visual->get_dc_wnd( hdc ) };
-
-      if ( !hdc || !wnd )
-         return { };
-
-      vec2_t< std::int32_t > out{
-         visual->get_wnd_rect( wnd ).m_right,
-         visual->get_wnd_rect( wnd ).m_bottom
-      };
-
-      visual->release_dc( hdc );
-      return out;
+      return { 1920, 1080 }; // todo read mem
    }
 
    [[ nodiscard ]]
@@ -205,6 +235,17 @@ namespace tk {
       return read_chain< std::ptrdiff_t >( world, chain, 3 );
    }
 
+   template< typename type_t >
+   const type_t clamp(
+      type_t& src,
+      const auto min,
+      const auto max
+   ) {
+      if ( src >= max ) src = max;
+      if ( src <= min ) src = min;
+      return src;
+   }
+
    [[ nodiscard ]]
    const vec2_t< std::int32_t >to_screen(
       const vec3_t< std::float_t >world
@@ -227,7 +268,7 @@ namespace tk {
       vec3_t< std::float_t >u = { view_matrix._12, view_matrix._22, view_matrix._32 };
 
       std::float_t w{ dot( t, world ) + view_matrix._44 };
-      if ( w < 0.098f )
+      if ( w < 0.1f )
          return { };
 
       std::float_t x{ dot( r, world ) + view_matrix._41 };
@@ -238,11 +279,8 @@ namespace tk {
          ptr< std::int32_t >( ( get_screen_size( ).m_y >> 0x1 ) * ( 1.f - y / w ) )
       };
 
-      if ( out.m_x > get_screen_size( ).m_x ) out.m_x = get_screen_size( ).m_x;
-      if ( out.m_y > get_screen_size( ).m_y ) out.m_y = get_screen_size( ).m_y;
-
-      if ( out.m_x < 0 ) out.m_x = 0;
-      if ( out.m_y < 0 ) out.m_y = 0;
+      clamp< std::int32_t >( out.m_x, 0, get_screen_size( ).m_x );
+      clamp< std::int32_t >( out.m_y, 0, get_screen_size( ).m_y );
 
       return out;
    }
@@ -259,10 +297,14 @@ namespace tk {
           && write< std::float_t >( addr + 0x230, angles.m_y );
    }
 
-   const void run_loop( ) {
-      if ( !get_timescale( ) )
+   const void draw_loop( ) {
+      auto ctx{ visual->get_user_dc( ) };
+      if ( !ctx )
          return;
+      visual->release_dc( ctx );
+   }
 
+   const void read_loop( ) {
       auto world{ get_game_world( ) };
       if ( !world )
          return;
@@ -270,10 +312,6 @@ namespace tk {
       auto list{ read< std::ptrdiff_t >( world + 0x88 ) };
       auto base{ read< std::ptrdiff_t >( list + 0x10 ) };
       auto size{ read< std::int32_t >( list + 0x18 ) };
-
-      auto hdc{ visual->get_user_dc( ) };
-      if ( !hdc )
-         return;
 
       for ( std::size_t i{ }; i < size; i++ ) {
          auto ctx{ read< std::ptrdiff_t >( base + 0x20 + ( i * 0x8 ) ) };
@@ -284,28 +322,8 @@ namespace tk {
             set_weapon_anim_mask( ctx, 0 );
             set_physical_stamina( ctx, 100.f );
          }
-
-         if ( !is_local( ctx ) && !is_dead( ctx ) ) {
-            auto pedo{ read< std::ptrdiff_t >( ctx + 0x48 ) };
-            if ( !pedo )
-               continue;
-
-            auto screen{ to_screen( read< vec3_t< std::float_t > >( pedo + 0x30 ) ) };
-            if ( !screen.m_x
-              || !screen.m_y )
-               continue;
-
-            auto center_x{ get_screen_size( ).m_x >> 0x1 };
-            auto center_y{ get_screen_size( ).m_y >> 0x1 };
-
-            visual->draw_line( hdc, center_x, center_y,
-               screen.m_x, screen.m_y, visual->rgb( 255, 255, 255 ) );
-         }
       }
 
       set_timescale( 1.8f );
-
-      visual->invalidate_wnd( visual->get_dc_wnd( hdc ) );
-      visual->release_dc( hdc );
    }
 }

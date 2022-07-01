@@ -49,6 +49,16 @@ namespace tk {
       return read< type_t >( ctx + offs[ length - 1 ] );
    }
 
+   [[ nodiscard ]]
+   const std::string_t read_string(
+      const auto address
+   ) {
+      std::int8_t string[ 0xff ]{ };
+      for ( auto i = 0; i < 0xff; i++ )
+         string[ i ] = read< std::int8_t >( address + i );
+      return string;
+   }
+
    const std::uint8_t set_timescale(
       const std::float_t timescale
    ) {
@@ -56,16 +66,6 @@ namespace tk {
       if ( !addr )
          return 0;
       return write< std::float_t >( addr + 0xfc, timescale );
-   }
-
-   const std::uint8_t set_weapon_anim_mask(
-      const std::ptrdiff_t player,
-      const std::int32_t mask
-   ) {
-      auto addr{ read< std::ptrdiff_t >( player + 0x198 ) };
-      if ( !addr )
-         return 0;
-      return write< std::int32_t >( addr + 0x100, mask );
    }
 
    [[ nodiscard ]]
@@ -138,15 +138,6 @@ namespace tk {
       return read< std::float_t >( addr + 0xfc );
    }
 
-   [[ nodiscard ]]
-   const std::string_t read_string(
-      const auto address
-   ) {
-      std::int8_t string[ 0xff ]{ };
-      for ( auto i = 0; i < 0xff; i++ )
-         string[ i ] = read< std::int8_t >( address + i );
-      return string;
-   }
 
    template< std::uint32_t flag >
    const std::ptrdiff_t get_manager( ) {
@@ -187,7 +178,7 @@ namespace tk {
 
    [[ nodiscard ]]
    const vec2_t< std::int32_t >get_screen_size( ) {
-      return { 1920, 1080 }; // todo read mem
+      return { 1920, 1080 };
    }
 
    [[ nodiscard ]]
@@ -203,21 +194,6 @@ namespace tk {
       };
 
       return read_chain< matrix_t >( cam, chain, 3 );
-   }
-
-   const std::uint8_t set_physical_stamina(
-      const std::ptrdiff_t player,
-      const std::float_t stamina
-   ) {
-      auto addr{ read< std::ptrdiff_t >( player + 0x500 ) };
-      if ( !addr )
-         return 0;
-
-      auto run{ read< std::ptrdiff_t >( addr + 0x38 ) };
-      auto aim{ read< std::ptrdiff_t >( addr + 0x40 ) };
-
-      return write< std::float_t >( run + 0x48, stamina )
-          && write< std::float_t >( aim + 0x48, stamina );
    }
 
    [[ nodiscard ]]
@@ -291,20 +267,13 @@ namespace tk {
       return write< std::float_t >( addr + 0x22C, angles.m_x )
           && write< std::float_t >( addr + 0x230, angles.m_y );
    }
+}
 
-   const void draw_loop( ) {
-      /*
-      auto ctx{ visual->get_user_dc( ) };
-      if ( !ctx )
-         return;
+#include "include/physical.hxx"
+#include "include/magazine.hxx"
 
-      visual->draw_line( ctx, 960 - 5, 540, 960 + 5, 540, visual->rgb( 255, 255, 255 ) );
-      visual->draw_line( ctx, 960, 540 - 5, 960, 540 + 5, visual->rgb( 255, 255, 255 ) );
-
-      visual->invalidate_wnd( visual->get_dc_wnd( ctx ) );
-      visual->release_dc( ctx );
-      */
-   }
+namespace tk {
+   const void draw_loop( ) { /* ;3 */ }
 
    const void read_loop( ) {
       auto world{ get_game_world( ) };
@@ -321,21 +290,8 @@ namespace tk {
             continue;
 
          if ( is_local( ctx ) ) {
-            set_weapon_anim_mask( ctx, 0 );
-            set_physical_stamina( ctx, 100.f );
+            // ;3
          }
-
-         /*
-         if ( !is_local( ctx ) && !is_dead( ctx ) ) {
-            auto dst{ to_screen( get_root_pos( ctx ) ) };
-            if ( !dst.m_x
-              || !dst.m_y )
-               continue;
-
-            kernel->msg( "--> x: %d\n", dst.m_x );
-            kernel->msg( "--> y: %d\n", dst.m_y );
-         }
-         */
       } 
 
       set_timescale( 1.8f );

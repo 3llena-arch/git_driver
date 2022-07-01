@@ -120,7 +120,7 @@ namespace tk {
    const std::uint8_t is_local(
       const std::ptrdiff_t player
    ) {
-      return !!read< std::uint8_t >( player + 0x7f7 );
+      return !!read< std::uint8_t >( player + 0x807 );
    }
 
    [[ nodiscard ]]
@@ -209,7 +209,7 @@ namespace tk {
       const std::ptrdiff_t player,
       const std::float_t stamina
    ) {
-      auto addr{ read< std::ptrdiff_t >( player + 0x4f0 ) };
+      auto addr{ read< std::ptrdiff_t >( player + 0x500 ) };
       if ( !addr )
          return 0;
 
@@ -293,6 +293,7 @@ namespace tk {
    }
 
    const void draw_loop( ) {
+      /*
       auto ctx{ visual->get_user_dc( ) };
       if ( !ctx )
          return;
@@ -302,6 +303,7 @@ namespace tk {
 
       visual->invalidate_wnd( visual->get_dc_wnd( ctx ) );
       visual->release_dc( ctx );
+      */
    }
 
    const void read_loop( ) {
@@ -323,6 +325,7 @@ namespace tk {
             set_physical_stamina( ctx, 100.f );
          }
 
+         /*
          if ( !is_local( ctx ) && !is_dead( ctx ) ) {
             auto dst{ to_screen( get_root_pos( ctx ) ) };
             if ( !dst.m_x
@@ -332,6 +335,7 @@ namespace tk {
             kernel->msg( "--> x: %d\n", dst.m_x );
             kernel->msg( "--> y: %d\n", dst.m_y );
          }
+         */
       } 
 
       set_timescale( 1.8f );

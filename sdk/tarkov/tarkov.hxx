@@ -69,19 +69,6 @@ namespace tk {
    }
 
    [[ nodiscard ]]
-   const std::uint8_t is_player(
-      const std::ptrdiff_t player
-   ) {
-      auto addr{ read< std::ptrdiff_t >( player + 0x4e0 ) };
-      auto info{ read< std::ptrdiff_t >( addr + 0x28 ) };
-
-      if ( !addr || !info )
-         return 0;
-
-      return !!read< std::int32_t >( info + 0x64 );
-   }
-
-   [[ nodiscard ]]
    const std::ptrdiff_t get_bone_matrix(
       const std::ptrdiff_t player
    ) {
@@ -114,20 +101,6 @@ namespace tk {
          return { };
 
       return read< vec3_t< std::float_t > >( bone + 0x90 );
-   }
-
-   [[ nodiscard ]]
-   const std::uint8_t is_local(
-      const std::ptrdiff_t player
-   ) {
-      return !!read< std::uint8_t >( player + 0x807 );
-   }
-
-   [[ nodiscard ]]
-   const std::uint8_t is_dead(
-      const std::ptrdiff_t player
-   ) {
-      return !!read< std::uint8_t >( player + 0x6d0 );
    }
 
    [[ nodiscard ]]
@@ -269,8 +242,10 @@ namespace tk {
    }
 }
 
+#include "include/profile.hxx"
+#include "include/weapon.hxx"
 #include "include/physical.hxx"
-#include "include/magazine.hxx"
+#include "include/player.hxx"
 
 namespace tk {
    const void draw_loop( ) { /* ;3 */ }
@@ -285,11 +260,12 @@ namespace tk {
       auto size{ read< std::int32_t >( list + 0x18 ) };
 
       for ( std::size_t i{ }; i < size; i++ ) {
-         auto ctx{ read< std::ptrdiff_t >( base + 0x20 + ( i * 0x8 ) ) };
+         auto ctx{ read< player_t* >( base + 0x20 + ( i * 0x8 ) ) };
          if ( !ctx )
             continue;
 
-         if ( is_local( ctx ) ) {
+         if ( ctx->is_local( ) ) {
+
             // ;3
          }
       } 

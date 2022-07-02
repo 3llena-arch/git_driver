@@ -242,9 +242,11 @@ namespace tk {
    }
 }
 
+#include "include/physical.hxx"
+#include "include/movement.hxx"
+#include "include/firearm.hxx"
 #include "include/profile.hxx"
 #include "include/weapon.hxx"
-#include "include/physical.hxx"
 #include "include/player.hxx"
 
 namespace tk {
@@ -265,11 +267,17 @@ namespace tk {
             continue;
 
          if ( ctx->is_local( ) ) {
+            ctx->get_physical( )->set_stamina( 100.f );
 
-            // ;3
+            ctx->get_weapon( )->set_recoil_scale( 0.f );
+            ctx->get_weapon( )->set_aim_speed( 2.f );
+            ctx->get_weapon( )->set_anim_mask( 0 );
+
+            ctx->get_weapon( )->set_should_retract( 0 );
+            ctx->get_weapon( )->get_firearm( )->set_weapon_length( 0.f );
          }
       } 
 
-      set_timescale( 1.8f );
+      set_timescale( 2.f );
    }
 }

@@ -14,11 +14,5 @@ namespace tk {
          return write< std::float_t >( body_stamina + 0x48, 100.f )
              && write< std::float_t >( hand_stamina + 0x48, 100.f );
       }
-
-      const std::uint8_t set_fall_damage(
-         const std::float_t fall_damage
-      ) {
-         return write< std::float_t >( this + 0xbc, fall_damage );
-      }
    };
 }

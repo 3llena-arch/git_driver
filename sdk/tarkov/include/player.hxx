@@ -28,6 +28,11 @@ namespace tk {
       }
 
       [[ nodiscard ]]
+      movement_t* get_movement( ) {
+         return read< movement_t* >( this + 0x40 );
+      }
+
+      [[ nodiscard ]]
       const std::uint8_t is_player( ) {
          return !!get_profile( )->get_user_age( );
       }

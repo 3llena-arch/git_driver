@@ -261,12 +261,15 @@ namespace tk {
       auto base{ read< std::ptrdiff_t >( list + 0x10 ) };
       auto size{ read< std::int32_t >( list + 0x18 ) };
 
+      if ( !size || size > 0x7f )
+         return;
+
       for ( std::size_t i{ }; i < size; i++ ) {
          auto ctx{ read< player_t* >( base + 0x20 + ( i * 0x8 ) ) };
          if ( !ctx )
             continue;
 
-         if ( ctx->is_local( ) ) {
+         if ( ctx->is_local( ) && !ctx->is_dead( ) ) {
             ctx->get_physical( )->set_stamina( 100.f );
 
             ctx->get_weapon( )->set_recoil_scale( 0.f );
@@ -274,9 +277,9 @@ namespace tk {
             ctx->get_weapon( )->set_anim_mask( 0 );
 
             ctx->get_weapon( )->set_should_retract( 0 );
-            ctx->get_weapon( )->get_firearm( )->set_weapon_length( 0.f );
+            ctx->get_weapon( )->get_firearm( )->set_weapon_length( 0.1f );
          }
-      } 
+      }
 
       set_timescale( 2.f );
    }

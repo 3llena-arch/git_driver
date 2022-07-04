@@ -35,7 +35,7 @@ namespace tk {
 
    template< typename type_t >
    const type_t read_chain(
-      const std::ptrdiff_t address,
+      const auto address,
       const std::ptrdiff_t* offs,
       const std::size_t length
    ) {
@@ -66,41 +66,6 @@ namespace tk {
       if ( !addr )
          return 0;
       return write< std::float_t >( addr + 0xfc, timescale );
-   }
-
-   [[ nodiscard ]]
-   const std::ptrdiff_t get_bone_matrix(
-      const std::ptrdiff_t player
-   ) {
-      const std::ptrdiff_t chain[ ] = {
-         0x000000a8,
-         0x00000028,
-         0x00000028,
-         0x00000010
-      };
-
-      return read_chain< std::ptrdiff_t >( player, chain, 4 );
-   }
-
-   [[ nodiscard ]]
-   const vec3_t< std::float_t > get_root_pos(
-      const std::ptrdiff_t player
-   ) {
-      auto matrix{ get_bone_matrix( player ) };
-      if ( !matrix )
-         return { };
-
-      const std::ptrdiff_t chain[ ] = {
-         0x00000020,
-         0x00000010,
-         0x00000038
-      };
-
-      auto bone{ read_chain< std::ptrdiff_t >( matrix, chain, 3 ) };
-      if ( !bone )
-         return { };
-
-      return read< vec3_t< std::float_t > >( bone + 0x90 );
    }
 
    [[ nodiscard ]]
@@ -257,19 +222,22 @@ namespace tk {
       if ( !world )
          return;
 
-      auto list{ read< std::ptrdiff_t >( world + 0x88 ) };
-      auto base{ read< std::ptrdiff_t >( list + 0x10 ) };
-      auto size{ read< std::int32_t >( list + 0x18 ) };
+      std::ptrdiff_t list{ };
+      std::ptrdiff_t base{ };
+      std::ptrdiff_t size{ };
 
-      if ( !size || size > 0x7f )
-         return;
+      set_timescale( 2.f );
+
+      while ( !list ) list = read< std::ptrdiff_t >( world + 0x88 );
+      while ( !base ) base = read< std::ptrdiff_t >( list + 0x10 );
+      while ( !size ) size = read< std::int32_t >( list + 0x18 );
 
       for ( std::size_t i{ }; i < size; i++ ) {
          auto ctx{ read< player_t* >( base + 0x20 + ( i * 0x8 ) ) };
-         if ( !ctx )
+         if ( !ctx || ctx->is_dead( ) )
             continue;
 
-         if ( ctx->is_local( ) && !ctx->is_dead( ) ) {
+         if ( ctx->is_local( ) ) {
             ctx->get_physical( )->set_stamina( 100.f );
 
             ctx->get_weapon( )->set_recoil_scale( 0.f );
@@ -280,7 +248,5 @@ namespace tk {
             ctx->get_weapon( )->get_firearm( )->set_weapon_length( 0.1f );
          }
       }
-
-      set_timescale( 2.f );
    }
 }

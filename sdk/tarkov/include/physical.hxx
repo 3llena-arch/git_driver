@@ -11,8 +11,8 @@ namespace tk {
          if ( !body_stamina || !hand_stamina )
             return 0;
 
-         return write< std::float_t >( body_stamina + 0x48, 100.f )
-             && write< std::float_t >( hand_stamina + 0x48, 100.f );
+         return write< std::float_t >( body_stamina + 0x48, stamina )
+             && write< std::float_t >( hand_stamina + 0x48, stamina );
       }
    };
 }

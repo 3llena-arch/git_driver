@@ -41,6 +41,9 @@ const std::uint8_t sys_read( ) {
    auto game{ kernel->process_by_name( L"EscapeFromTarkov.exe" ) };
    auto base{ kernel->module_by_name( game, L"UnityPlayer.dll" ) };
 
+   kernel->msg( "* game %llx\n", game );
+   kernel->msg( "* base %llx\n", base );
+
    tk::m_game = game;
    tk::m_base = base;
 

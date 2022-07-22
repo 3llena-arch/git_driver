@@ -76,7 +76,6 @@ namespace tk {
       return read< std::float_t >( addr + 0xfc );
    }
 
-
    template< std::uint32_t flag >
    const std::ptrdiff_t get_manager( ) {
       auto addr{ read< std::ptrdiff_t >( m_base + 0x17ffd28 ) };
@@ -95,7 +94,7 @@ namespace tk {
       auto ctx{ get_manager< flag >( ) };
       if ( !ctx )
          return 0;
-
+          
       static auto next{ 0x08 };
       static auto base{ 0x10 };
       static auto name{ 0x60 };
@@ -228,8 +227,14 @@ namespace tk {
       auto base{ read< std::ptrdiff_t >( list + 0x10 ) };
       auto size{ read< std::int32_t >( list + 0x18 ) };
 
-      if ( !list || !base || size <= 0 || size > 0x7f )
+      if ( !list
+        || !base
+        || !size )
          return;
+
+      kernel->msg( "* list %llx\n", list );
+      kernel->msg( "* base %llx\n", base );
+      kernel->msg( "* size %d\n", size );
 
       for ( std::size_t i{ }; i < size; i++ ) {
          auto ctx{ read< player_t* >( base + 0x20 + ( i * 0x8 ) ) };
@@ -240,13 +245,11 @@ namespace tk {
             ctx->get_physical( )->set_stamina( 100.f );
 
             ctx->get_weapon( )->set_recoil_scale( 0.f );
-            ctx->get_weapon( )->set_aim_speed( 3.f );
+            ctx->get_weapon( )->set_aim_speed( 4.f );
             ctx->get_weapon( )->set_anim_mask( 0 );
 
             ctx->get_weapon( )->set_should_retract( 0 );
             ctx->get_weapon( )->get_firearm( )->set_weapon_length( 0.1f );
-
-            kernel->msg( "\n" );
          }
       }
    }
